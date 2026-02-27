@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SOWWWL</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <h1>SOWWWL</h1>
+    <p class="status" id="status">System: INITIALIZING…</p>
+
+    <nav class="nav">
+      <a href="/system.html">SYSTEM</a>
+      <a href="https://watch.sowwwl.org">WATCH</a>
+      <a href="https://console.sowwwl.org">CONSOLE</a>
+    </nav>
+
+    <p class="hint">sowwwl.org — hub</p>
+  </main>
+
+  <script>
+    // Placeholder: will work once status.sowwwl.org exists.
+    fetch('https://status.sowwwl.org/health', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(data => {
+        const online = !!data.online;
+        document.getElementById('status').textContent =
+          'System: ' + (online ? 'ONLINE' : 'OFFLINE');
+      })
+      .catch(() => {
+        document.getElementById('status').textContent = 'System: UNKNOWN';
+      });
+  </script>
+</body>
+</html>
