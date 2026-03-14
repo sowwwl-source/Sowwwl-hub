@@ -44,9 +44,11 @@
   const footerText = document.getElementById('footerText');
   const pointerAura = document.getElementById('pointerAura');
   const bridgeGrid = document.getElementById('bridgeGrid');
+  const socket = typeof window.io === 'function' ? window.io() : null;
 
   const state = {
     items: [],
+    snapshots: new Map(),
     lastTime: performance.now(),
     pointer: {
       active: false,
@@ -119,11 +121,12 @@
         <span class="dvd-window__dot">live</span>
       </div>
       <div class="dvd-window__surface">
-        <iframe src="${domain.url}" title="${domain.name}" loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        <img class="dvd-window__image" alt="" hidden>
+        <div class="dvd-window__placeholder">presence en approche</div>
         <div class="dvd-window__grain"></div>
       </div>
       <div class="dvd-window__label">
-        <span>home vision</span>
+        <span class="dvd-window__meta">capture en approche</span>
         <a href="${domain.url}" target="_blank" rel="noreferrer">ouvrir</a>
       </div>
       <div class="dvd-window__hover" aria-hidden="true"></div>
@@ -134,6 +137,9 @@
       el,
       width,
       height,
+      imageEl: el.querySelector('.dvd-window__image'),
+      placeholderEl: el.querySelector('.dvd-window__placeholder'),
+      metaEl: el.querySelector('.dvd-window__meta'),
       x: randomBetween(EDGE_PADDING, Math.max(EDGE_PADDING, window.innerWidth - width - EDGE_PADDING)),
       y: randomBetween(SAFE_TOP, Math.max(SAFE_TOP, window.innerHeight - SAFE_BOTTOM - height)),
       vx: randomBetween(-74, 74) || 56,
@@ -219,6 +225,64 @@
     document.documentElement.style.setProperty('--bridge-current', domain.accent);
     updateBridgeCards();
     footerText.textContent = composeFooter('Le fond et les autres passages continuent de respirer autour.');
+  }
+
+  function updateWindowSnapshot(domainName) {
+    const item = findItem(domainName);
+
+    if (!item) {
+      return;
+    }
+
+    const snapshot = state.snapshots.get(domainName);
+
+    if (snapshot?.status === 'ok' && snapshot.screenshot) {
+      item.imageEl.src = `data:${snapshot.mimeType || 'image/jpeg'};base64,${snapshot.screenshot}`;
+      item.imageEl.alt = `Capture ${domainName}`;
+      item.imageEl.hidden = false;
+      item.placeholderEl.hidden = true;
+      item.metaEl.textContent = snapshot.pageTitle || snapshot.title || domainName;
+      item.el.classList.add('is-live');
+      item.el.classList.remove('is-idle');
+      return;
+    }
+
+    item.imageEl.hidden = true;
+    item.placeholderEl.hidden = false;
+    item.placeholderEl.textContent = snapshot?.note || snapshot?.error || 'presence en approche';
+    item.metaEl.textContent = snapshot?.status === 'error' ? 'reprise en cours' : 'capture en approche';
+    item.el.classList.add('is-idle');
+    item.el.classList.remove('is-live');
+  }
+
+  function bindSnapshotFeed() {
+    if (!socket) {
+      footerText.textContent = composeFooter('Le fil de captures du hub est absent ici. La page reste stable et attend la source.');
+      return;
+    }
+
+    socket.on('connect', () => {
+      footerText.textContent = composeFooter('Le fil de captures tient la scene sans embarquer les cinq sites en direct.');
+    });
+
+    socket.on('disconnect', () => {
+      footerText.textContent = composeFooter('Le fil de captures s est interrompu. Reconnexion en cours.');
+    });
+
+    socket.on('bootstrap', ({ snapshots }) => {
+      snapshots.forEach((snapshot) => {
+        state.snapshots.set(snapshot.domain, snapshot);
+      });
+
+      state.items.forEach((item) => {
+        updateWindowSnapshot(item.domain.name);
+      });
+    });
+
+    socket.on('screenshot', (snapshot) => {
+      state.snapshots.set(snapshot.domain, snapshot);
+      updateWindowSnapshot(snapshot.domain);
+    });
   }
 
   function flashBounce(item) {
@@ -534,6 +598,7 @@
     state.items = domains.map((domain, index) => createWindow(domain, index));
     state.items.forEach((item, index) => {
       item.el.style.zIndex = String(index + 1);
+      updateWindowSnapshot(item.domain.name);
     });
   }
 
@@ -571,6 +636,7 @@
 
   initWindows();
   bindBridges();
+  bindSnapshotFeed();
   activateBridge('sowwwl.com');
   initCamera();
   requestAnimationFrame(animate);
