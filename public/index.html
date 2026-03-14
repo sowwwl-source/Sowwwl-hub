@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOWWWL Mosaic Monitor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>SOWWWL</h1>
+      <p class="subtitle">Mosaic Monitor - Vision uxorilocale</p>
+      <div class="status" id="status">Initialisation...</div>
+    </header>
+
+    <main>
+      <div class="mosaic" id="mosaic">
+        <!-- Les tuiles de domaines seront générées ici -->
+      </div>
+    </main>
+
+    <footer>
+      <p>Live capture 1 fps • Décalage 11ms • Visite guidée auto</p>
+    </footer>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

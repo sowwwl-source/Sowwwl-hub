@@ -1,0 +1,46 @@
+services:
+  app:
+    build: .
+    container_name: sowwwl-app
+    ports:
+      - "3311:3311"
+    environment:
+      - PORT=3311
+      - NODE_ENV=production
+    restart: unless-stopped
+    init: true
+    ipc: host
+    networks:
+      - sowwwl-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3311/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  caddy:
+    image: caddy:latest
+    container_name: sowwwl-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      - DOMAIN=${DOMAIN:-sowwwl.org}
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - sowwwl-network
+
+networks:
+  sowwwl-network:
+    driver: bridge
+
+volumes:
+  caddy-data:
+  caddy-config:
