@@ -7,6 +7,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PUBLIC_DIR = path.join(__dirname, 'public');
+const ROOT_INDEX_PATH = path.join(__dirname, 'index.html');
+const ROOT_STYLE_PATH = path.join(__dirname, 'style.css');
+const ROOT_SCRIPT_PATH = path.join(__dirname, 'site.js');
 
 const app = express();
 const httpServer = createServer(app);
@@ -23,6 +27,8 @@ const CAPTURE_WIDTH = envNumber('CAPTURE_WIDTH', 1440);
 const CAPTURE_HEIGHT = envNumber('CAPTURE_HEIGHT', 960);
 const PLAYWRIGHT_EXECUTABLE_PATH = process.env.PLAYWRIGHT_EXECUTABLE_PATH;
 const CAMERA_STREAM_URL = normalizeCameraUrl(process.env.CAMERA_STREAM_URL || 'http://192.168.1.22:8081/stream.mjpg');
+const CAMERA_DASHBOARD_URL =
+  normalizeCameraUrl(process.env.CAMERA_DASHBOARD_URL || deriveCameraDashboardUrl(CAMERA_STREAM_URL));
 
 const DOMAINS = [
   {
@@ -75,7 +81,19 @@ let browser = null;
 let browserPromise = null;
 let captureWave = 0;
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.get(['/', '/index.html'], (req, res) => {
+  res.sendFile(ROOT_INDEX_PATH);
+});
+
+app.get('/style.css', (req, res) => {
+  res.type('text/css').sendFile(ROOT_STYLE_PATH);
+});
+
+app.get('/site.js', (req, res) => {
+  res.type('application/javascript').sendFile(ROOT_SCRIPT_PATH);
+});
+
+app.use('/hub', express.static(PUBLIC_DIR));
 
 app.get('/healthz', (req, res) => {
   res.json({
@@ -286,6 +304,7 @@ function cameraConfig() {
   return {
     configured: Boolean(CAMERA_STREAM_URL),
     streamUrl: CAMERA_STREAM_URL || null,
+    dashboardUrl: CAMERA_DASHBOARD_URL || null,
     proxyPath: CAMERA_STREAM_URL ? '/camera/live' : null,
     note: 'The proxy works only when this server can reach the camera over the same network.'
   };
@@ -309,6 +328,19 @@ function normalizeCameraUrl(value) {
   }
 
   return /^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
+}
+
+function deriveCameraDashboardUrl(streamUrl) {
+  if (!streamUrl) {
+    return '';
+  }
+
+  try {
+    const target = new URL(streamUrl);
+    return `${target.origin}/`;
+  } catch {
+    return '';
+  }
 }
 
 function simplifyError(error) {

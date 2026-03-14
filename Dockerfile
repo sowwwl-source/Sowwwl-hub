@@ -38,6 +38,9 @@ COPY package*.json ./
 RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi
 
 COPY server.mjs ./
+COPY index.html ./
+COPY style.css ./
+COPY site.js ./
 COPY public/ ./public/
 
 EXPOSE 3311

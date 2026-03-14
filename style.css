@@ -191,6 +191,11 @@ body {
   color: var(--text-soft);
 }
 
+.control-note a {
+  color: var(--text-main);
+  text-decoration-color: rgba(247, 241, 230, 0.35);
+}
+
 .controls {
   display: grid;
   gap: 14px;

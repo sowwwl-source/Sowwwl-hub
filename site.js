@@ -45,7 +45,13 @@
     },
     motionPermissionAsked: false,
     zCounter: 5,
-    hitTimers: new WeakMap()
+    hitTimers: new WeakMap(),
+    camera: {
+      sources: [],
+      retryTimer: 0,
+      attemptToken: 0,
+      activeSource: ''
+    }
   };
 
   function clamp(value, min, max) {
@@ -244,13 +250,32 @@
     cameraState.innerHTML = `<span class="status-pill__dot"></span><span>${message}</span>`;
   }
 
-  function tryCameraSource(sources, index = 0) {
+  function uniqueSources(sources) {
+    return [...new Set(sources.filter(Boolean))];
+  }
+
+  function scheduleCameraRetry(delay = 8000) {
+    if (state.camera.retryTimer) {
+      window.clearTimeout(state.camera.retryTimer);
+    }
+
+    state.camera.retryTimer = window.setTimeout(() => {
+      void initCamera();
+    }, delay);
+  }
+
+  function tryCameraSource(sources, index = 0, attemptToken = state.camera.attemptToken) {
+    if (attemptToken !== state.camera.attemptToken) {
+      return;
+    }
+
     if (index >= sources.length) {
       cameraFallback.hidden = false;
       cameraBackground.hidden = true;
       updateCameraState('fond camera en attente', true);
-      cameraNote.textContent = 'Le fond sowwwl-pi attend encore un relais image sur la meme origine ou en http local.';
-      footerText.textContent = 'Le fond sowwwl-pi est pret a etre arrange des qu une image passe sur /camera/live.';
+      cameraNote.textContent = 'Le fond sowwwl-pi attend encore un relais image en meme origine. Nouvelle tentative automatique en cours.';
+      footerText.textContent = 'Fond de page: sowwwl-pi en veille de raccord. Le hub mosaïque reste disponible via /hub/.';
+      scheduleCameraRetry();
       return;
     }
 
@@ -260,38 +285,85 @@
 
     const timeout = window.setTimeout(() => {
       probe.src = '';
-      tryCameraSource(sources, index + 1);
+      tryCameraSource(sources, index + 1, attemptToken);
     }, 3200);
 
     probe.onload = () => {
+      if (attemptToken !== state.camera.attemptToken) {
+        return;
+      }
+
       window.clearTimeout(timeout);
+      state.camera.activeSource = candidate;
       cameraBackground.hidden = false;
       cameraFallback.hidden = true;
       cameraBackground.src = cacheBusted;
+      cameraBackground.onerror = () => {
+        if (state.camera.activeSource !== candidate) {
+          return;
+        }
+
+        state.camera.activeSource = '';
+        cameraFallback.hidden = false;
+        cameraBackground.hidden = true;
+        updateCameraState('fond camera en reconnexion', true);
+        cameraNote.textContent = 'Le relais sowwwl-pi s est interrompu. Nouvelle tentative automatique.';
+        footerText.textContent = 'Fond de page: reconnexion sowwwl-pi en cours.';
+        scheduleCameraRetry(2500);
+      };
       updateCameraState('fond sowwwl-pi actif');
       cameraNote.textContent = `Fond direct branche sur ${candidate.includes('/camera/live') ? '/camera/live' : 'le flux local MJPEG'}.`;
-      footerText.textContent = 'Fond de page: sowwwl-pi vivant. Fenetres: rebond + spin + translation + capteurs.';
+      footerText.textContent = 'Fond de page: sowwwl-pi vivant. Le moniteur de captures reste visible via /hub/.';
     };
 
     probe.onerror = () => {
+      if (attemptToken !== state.camera.attemptToken) {
+        return;
+      }
+
       window.clearTimeout(timeout);
-      tryCameraSource(sources, index + 1);
+      tryCameraSource(sources, index + 1, attemptToken);
     };
 
     probe.src = cacheBusted;
   }
 
-  function initCamera() {
+  async function initCamera() {
+    state.camera.attemptToken += 1;
+
     const sources = [];
     const relayUrl = `${window.location.origin}/camera/live`;
+    let dashboardUrl = localDashboardUrl;
+
+    try {
+      const response = await fetch(`${window.location.origin}/api/camera`, {
+        cache: 'no-store'
+      });
+
+      if (response.ok) {
+        const camera = await response.json();
+
+        if (camera.proxyPath) {
+          sources.push(new URL(camera.proxyPath, window.location.origin).toString());
+        }
+
+        if (camera.dashboardUrl) {
+          dashboardUrl = camera.dashboardUrl;
+        }
+      }
+    } catch (error) {
+      cameraNote.textContent = 'Le hub public tourne sans reponse API camera. On tente quand meme le relais /camera/live.';
+    }
+
     sources.push(relayUrl);
 
     if (window.location.protocol !== 'https:') {
       sources.push(localStreamUrl);
     }
 
-    cameraOpen.href = localDashboardUrl;
-    tryCameraSource(sources);
+    state.camera.sources = uniqueSources(sources);
+    cameraOpen.href = dashboardUrl;
+    tryCameraSource(state.camera.sources, 0, state.camera.attemptToken);
   }
 
   function recalcWindowSizes() {

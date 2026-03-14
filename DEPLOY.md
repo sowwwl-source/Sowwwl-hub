@@ -20,6 +20,13 @@ open http://localhost:3311
 
 Ne tape pas `http://localhost:3311` seul dans le terminal. Il faut faire `open http://localhost:3311`.
 
+Quand le serveur Node tourne maintenant:
+
+```text
+/        -> facade publique habitee avec fond sowwwl-pi via /camera/live
+/hub/    -> moniteur capture + mosaïque Playwright
+```
+
 ## 3. Envoyer le code sur GitHub
 
 ```bash
@@ -85,6 +92,12 @@ Le hub sera ensuite disponible sur:
 
 ```text
 https://sowwwl.org
+```
+
+Et le moniteur interne restera visible sur:
+
+```text
+https://sowwwl.org/hub/
 ```
 
 ## 7. Mettre a jour plus tard
