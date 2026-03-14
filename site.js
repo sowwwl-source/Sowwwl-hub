@@ -1,135 +1,376 @@
 (() => {
-  const localAddress = '192.168.1.22:8081';
-  const localBaseUrl = `http://${localAddress}`;
-  const localDashboardUrl = `${localBaseUrl}/`;
-  const localCandidates = ['/stream.mjpg', '/stream', '/video', '/mjpeg'].map((path) => `${localBaseUrl}${path}`);
+  const FRAME_WIDTH = 1280;
+  const FRAME_HEIGHT = 860;
+  const SAFE_TOP = 170;
+  const SAFE_BOTTOM = 90;
+  const EDGE_PADDING = 18;
+  const POINTER_RADIUS = 260;
+  const localDashboardUrl = 'http://192.168.1.22:8081/';
+  const localStreamUrl = 'http://192.168.1.22:8081/stream.mjpg';
+  const domains = [
+    { name: 'sowwwl.com', url: 'https://sowwwl.com', accent: '#f2b066' },
+    { name: 'sowwwl.art', url: 'https://sowwwl.art', accent: '#9ed8c8' },
+    { name: 'sowwwl.net', url: 'https://sowwwl.net', accent: '#f08b74' },
+    { name: 'sowwwl.fr', url: 'https://sowwwl.fr', accent: '#c4bc8b' },
+    { name: 'sowwwl.cloud', url: 'https://sowwwl.cloud', accent: '#8ab7d8' }
+  ];
 
-  const cameraImage = document.getElementById('cameraImage');
-  const cameraFrame = document.getElementById('cameraFrame');
-  const cameraPlaceholder = document.getElementById('cameraPlaceholder');
-  const cameraMode = document.getElementById('cameraMode');
-  const cameraStatus = document.getElementById('cameraStatus');
-  const cameraAddress = document.getElementById('cameraAddress');
+  const playfield = document.getElementById('playfield');
+  const cameraBackground = document.getElementById('cameraBackground');
+  const cameraFallback = document.getElementById('cameraFallback');
+  const cameraState = document.getElementById('cameraState');
+  const motionState = document.getElementById('motionState');
+  const motionToggle = document.getElementById('motionToggle');
   const cameraOpen = document.getElementById('cameraOpen');
-  const cameraCopy = document.getElementById('cameraCopy');
-  const consoleTone = document.getElementById('consoleTone');
+  const cameraNote = document.getElementById('cameraNote');
+  const footerText = document.getElementById('footerText');
+  const pointerAura = document.getElementById('pointerAura');
 
-  cameraAddress.textContent = localAddress;
-  cameraOpen.href = localDashboardUrl;
+  const state = {
+    items: [],
+    lastTime: performance.now(),
+    pointer: {
+      active: false,
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+      vx: 0,
+      vy: 0,
+      lastX: window.innerWidth / 2,
+      lastY: window.innerHeight / 2
+    },
+    tilt: {
+      active: false,
+      x: 0,
+      y: 0
+    },
+    motionPermissionAsked: false,
+    zCounter: 5,
+    hitTimers: new WeakMap()
+  };
 
-  cameraCopy.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(localBaseUrl);
-      cameraCopy.textContent = 'adresse copiee';
-      window.setTimeout(() => {
-        cameraCopy.textContent = 'copier l adresse';
-      }, 1600);
-    } catch (error) {
-      cameraCopy.textContent = 'copie impossible';
-      window.setTimeout(() => {
-        cameraCopy.textContent = 'copier l adresse';
-      }, 1600);
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function randomBetween(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  function sizeForViewport(index) {
+    const basis = Math.min(window.innerWidth, window.innerHeight);
+    const width = clamp(basis * (window.innerWidth < 700 ? 0.32 : 0.24) + index * 6, 180, 340);
+    const height = width * (FRAME_HEIGHT / FRAME_WIDTH);
+
+    return { width, height };
+  }
+
+  function createWindow(domain, index) {
+    const { width, height } = sizeForViewport(index);
+    const el = document.createElement('article');
+    el.className = 'dvd-window';
+    el.style.setProperty('--window-accent', domain.accent);
+    el.style.setProperty('--window-width', `${width}px`);
+    el.style.setProperty('--window-height', `${height}px`);
+    el.style.setProperty('--frame-scale', `${width / FRAME_WIDTH}`);
+
+    el.innerHTML = `
+      <div class="dvd-window__chrome">
+        <span>${domain.name}</span>
+        <span class="dvd-window__dot">live</span>
+      </div>
+      <div class="dvd-window__surface">
+        <iframe src="${domain.url}" title="${domain.name}" loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        <div class="dvd-window__grain"></div>
+      </div>
+      <div class="dvd-window__label">
+        <span>home vision</span>
+        <a href="${domain.url}" target="_blank" rel="noreferrer">ouvrir</a>
+      </div>
+      <div class="dvd-window__hover" aria-hidden="true"></div>
+    `;
+
+    const item = {
+      domain,
+      el,
+      width,
+      height,
+      x: randomBetween(EDGE_PADDING, Math.max(EDGE_PADDING, window.innerWidth - width - EDGE_PADDING)),
+      y: randomBetween(SAFE_TOP, Math.max(SAFE_TOP, window.innerHeight - SAFE_BOTTOM - height)),
+      vx: randomBetween(-110, 110) || 80,
+      vy: randomBetween(-92, 92) || -64,
+      spin: randomBetween(-18, 18) || 9,
+      angle: randomBetween(-8, 8),
+      hover: false
+    };
+
+    el.addEventListener('pointerenter', () => {
+      item.hover = true;
+      state.zCounter += 1;
+      item.el.style.zIndex = String(state.zCounter);
+      item.vx *= 1.08;
+      item.vy *= 1.08;
+      item.spin *= 1.18;
+      item.el.classList.add('is-hovered');
+    });
+
+    el.addEventListener('pointerleave', () => {
+      item.hover = false;
+      item.el.classList.remove('is-hovered');
+    });
+
+    playfield.appendChild(el);
+    return item;
+  }
+
+  function flashBounce(item) {
+    item.el.classList.add('is-hit');
+    const existing = state.hitTimers.get(item.el);
+    if (existing) {
+      window.clearTimeout(existing);
     }
-  });
-
-  function showPlaceholder(message, status, mode) {
-    cameraImage.hidden = true;
-    cameraFrame.hidden = true;
-    cameraPlaceholder.hidden = false;
-    cameraPlaceholder.textContent = message;
-    cameraStatus.textContent = status;
-    cameraMode.textContent = mode;
-    consoleTone.textContent = mode;
+    const timer = window.setTimeout(() => {
+      item.el.classList.remove('is-hit');
+    }, 180);
+    state.hitTimers.set(item.el, timer);
   }
 
-  function useImage(url, status, mode) {
-    cameraFrame.hidden = true;
-    cameraPlaceholder.hidden = true;
-    cameraImage.hidden = false;
-    cameraImage.src = url;
-    cameraStatus.textContent = status;
-    cameraMode.textContent = mode;
-    consoleTone.textContent = mode;
+  function updateBounds(item) {
+    const maxX = Math.max(EDGE_PADDING, window.innerWidth - item.width - EDGE_PADDING);
+    const maxY = Math.max(SAFE_TOP, window.innerHeight - item.height - SAFE_BOTTOM);
+
+    if (item.x < EDGE_PADDING) {
+      item.x = EDGE_PADDING;
+      item.vx = Math.abs(item.vx);
+      item.spin += 8;
+      flashBounce(item);
+    } else if (item.x > maxX) {
+      item.x = maxX;
+      item.vx = -Math.abs(item.vx);
+      item.spin -= 8;
+      flashBounce(item);
+    }
+
+    if (item.y < SAFE_TOP) {
+      item.y = SAFE_TOP;
+      item.vy = Math.abs(item.vy);
+      item.spin += 6;
+      flashBounce(item);
+    } else if (item.y > maxY) {
+      item.y = maxY;
+      item.vy = -Math.abs(item.vy);
+      item.spin -= 6;
+      flashBounce(item);
+    }
   }
 
-  function useFrame(url, status, mode) {
-    cameraImage.hidden = true;
-    cameraPlaceholder.hidden = true;
-    cameraFrame.hidden = false;
-    cameraFrame.src = url;
-    cameraStatus.textContent = status;
-    cameraMode.textContent = mode;
-    consoleTone.textContent = mode;
+  function updatePointerAura() {
+    if (!state.pointer.active) {
+      pointerAura.style.opacity = '0';
+      return;
+    }
+
+    pointerAura.style.opacity = '1';
+    pointerAura.style.transform = `translate3d(${state.pointer.x}px, ${state.pointer.y}px, 0)`;
   }
 
-  async function fetchCameraConfig() {
-    try {
-      const response = await fetch('/api/camera', { cache: 'no-store' });
+  function pointerMove(event) {
+    const x = event.clientX;
+    const y = event.clientY;
+    state.pointer.vx = x - state.pointer.lastX;
+    state.pointer.vy = y - state.pointer.lastY;
+    state.pointer.x = x;
+    state.pointer.y = y;
+    state.pointer.lastX = x;
+    state.pointer.lastY = y;
+    state.pointer.active = true;
+    updatePointerAura();
+  }
 
-      if (!response.ok) {
-        return null;
+  function pointerLeave() {
+    state.pointer.active = false;
+    state.pointer.vx = 0;
+    state.pointer.vy = 0;
+    updatePointerAura();
+  }
+
+  function setMotionState(message, mode) {
+    motionState.className = `status-pill ${mode === 'warn' ? 'status-pill--warn' : 'status-pill--secondary'}`;
+    motionState.innerHTML = `<span class="status-pill__dot"></span><span>${message}</span>`;
+  }
+
+  function enableOrientationTracking() {
+    window.addEventListener('deviceorientation', (event) => {
+      state.tilt.active = true;
+      state.tilt.x = clamp((event.gamma || 0) / 28, -1.2, 1.2);
+      state.tilt.y = clamp((event.beta || 0) / 34, -1.2, 1.2);
+    });
+    setMotionState('mouvement actif', 'ok');
+    motionToggle.textContent = 'mouvement actif';
+  }
+
+  async function requestMotion() {
+    if (
+      typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function'
+    ) {
+      if (state.motionPermissionAsked) {
+        return;
+      }
+      state.motionPermissionAsked = true;
+
+      try {
+        const result = await DeviceOrientationEvent.requestPermission();
+        if (result === 'granted') {
+          enableOrientationTracking();
+        } else {
+          setMotionState('mouvement refuse', 'warn');
+        }
+      } catch (error) {
+        setMotionState('mouvement indisponible', 'warn');
+      }
+      return;
+    }
+
+    if ('DeviceOrientationEvent' in window) {
+      enableOrientationTracking();
+      return;
+    }
+
+    setMotionState('accelerometre absent', 'warn');
+  }
+
+  function updateCameraState(message, warn = false) {
+    cameraState.className = `status-pill ${warn ? 'status-pill--warn' : ''}`;
+    cameraState.innerHTML = `<span class="status-pill__dot"></span><span>${message}</span>`;
+  }
+
+  function tryCameraSource(sources, index = 0) {
+    if (index >= sources.length) {
+      cameraFallback.hidden = false;
+      cameraBackground.hidden = true;
+      updateCameraState('fond camera en attente', true);
+      cameraNote.textContent = 'Le fond sowwwl-pi attend encore un relais image sur la meme origine ou en http local.';
+      footerText.textContent = 'Le fond sowwwl-pi est pret a etre arrange des qu une image passe sur /camera/live.';
+      return;
+    }
+
+    const candidate = sources[index];
+    const probe = new Image();
+    const cacheBusted = `${candidate}${candidate.includes('?') ? '&' : '?'}v=${Date.now()}`;
+
+    const timeout = window.setTimeout(() => {
+      probe.src = '';
+      tryCameraSource(sources, index + 1);
+    }, 3200);
+
+    probe.onload = () => {
+      window.clearTimeout(timeout);
+      cameraBackground.hidden = false;
+      cameraFallback.hidden = true;
+      cameraBackground.src = cacheBusted;
+      updateCameraState('fond sowwwl-pi actif');
+      cameraNote.textContent = `Fond direct branche sur ${candidate.includes('/camera/live') ? '/camera/live' : 'le flux local MJPEG'}.`;
+      footerText.textContent = 'Fond de page: sowwwl-pi vivant. Fenetres: rebond + spin + translation + capteurs.';
+    };
+
+    probe.onerror = () => {
+      window.clearTimeout(timeout);
+      tryCameraSource(sources, index + 1);
+    };
+
+    probe.src = cacheBusted;
+  }
+
+  function initCamera() {
+    const sources = [];
+    const relayUrl = `${window.location.origin}/camera/live`;
+    sources.push(relayUrl);
+
+    if (window.location.protocol !== 'https:') {
+      sources.push(localStreamUrl);
+    }
+
+    cameraOpen.href = localDashboardUrl;
+    tryCameraSource(sources);
+  }
+
+  function recalcWindowSizes() {
+    state.items.forEach((item, index) => {
+      const { width, height } = sizeForViewport(index);
+      item.width = width;
+      item.height = height;
+      item.el.style.setProperty('--window-width', `${width}px`);
+      item.el.style.setProperty('--window-height', `${height}px`);
+      item.el.style.setProperty('--frame-scale', `${width / FRAME_WIDTH}`);
+      item.x = clamp(item.x, EDGE_PADDING, Math.max(EDGE_PADDING, window.innerWidth - width - EDGE_PADDING));
+      item.y = clamp(item.y, SAFE_TOP, Math.max(SAFE_TOP, window.innerHeight - height - SAFE_BOTTOM));
+    });
+  }
+
+  function animate(now) {
+    const dt = Math.min(0.032, (now - state.lastTime) / 1000 || 0.016);
+    state.lastTime = now;
+
+    const pointerDecay = Math.pow(0.84, dt * 60);
+    state.pointer.vx *= pointerDecay;
+    state.pointer.vy *= pointerDecay;
+
+    state.items.forEach((item, index) => {
+      const cx = item.x + item.width / 2;
+      const cy = item.y + item.height / 2;
+
+      item.vx += state.tilt.x * 18 * dt;
+      item.vy += state.tilt.y * 22 * dt;
+
+      if (state.pointer.active) {
+        const dx = cx - state.pointer.x;
+        const dy = cy - state.pointer.y;
+        const distance = Math.hypot(dx, dy);
+
+        if (distance < POINTER_RADIUS) {
+          const strength = (1 - distance / POINTER_RADIUS) * 220;
+          const nx = dx / (distance || 1);
+          const ny = dy / (distance || 1);
+          item.vx += (nx * strength + state.pointer.vx * 0.9) * dt;
+          item.vy += (ny * strength + state.pointer.vy * 0.9) * dt;
+          item.spin += (state.pointer.vx + state.pointer.vy) * 0.005 * dt * 60;
+        }
       }
 
-      return response.json();
-    } catch (error) {
-      return null;
-    }
+      item.vx += Math.sin((now * 0.0012) + index) * 0.8 * dt;
+      item.vy += Math.cos((now * 0.0015) + index * 0.7) * 0.7 * dt;
+
+      const friction = item.hover ? 0.992 : 0.996;
+      item.vx *= Math.pow(friction, dt * 60);
+      item.vy *= Math.pow(friction, dt * 60);
+      item.spin *= Math.pow(0.996, dt * 60);
+
+      item.x += item.vx * dt;
+      item.y += item.vy * dt;
+      item.angle += item.spin * dt;
+
+      updateBounds(item);
+
+      item.el.style.transform = `translate3d(${item.x}px, ${item.y}px, 0) rotate(${item.angle}deg)`;
+    });
+
+    requestAnimationFrame(animate);
   }
 
-  function tryLocalCandidates(index = 0) {
-    if (index >= localCandidates.length) {
-      useFrame(
-        localDashboardUrl,
-        'dashboard local a ouvrir',
-        'Le flux ne se laisse pas accrocher en image directe. Le lieu garde le dashboard local ouvert.'
-      );
-      return;
-    }
-
-    const testImage = new Image();
-    const candidate = `${localCandidates[index]}${localCandidates[index].includes('?') ? '&' : '?'}v=${Date.now()}`;
-
-    testImage.onload = () => {
-      useImage(
-        candidate,
-        'camera locale en direct',
-        'Flux MJPEG accroche en direct depuis le meme reseau.'
-      );
-    };
-
-    testImage.onerror = () => {
-      tryLocalCandidates(index + 1);
-    };
-
-    testImage.src = candidate;
+  function initWindows() {
+    playfield.innerHTML = '';
+    state.items = domains.map((domain, index) => createWindow(domain, index));
+    state.items.forEach((item, index) => {
+      item.el.style.zIndex = String(index + 1);
+    });
   }
 
-  async function initCamera() {
-    const config = await fetchCameraConfig();
+  window.addEventListener('pointermove', pointerMove);
+  window.addEventListener('pointerleave', pointerLeave);
+  window.addEventListener('resize', recalcWindowSizes);
+  motionToggle.addEventListener('click', requestMotion);
 
-    if (config?.proxyPath) {
-      const proxyUrl = new URL(config.proxyPath, window.location.origin).toString();
-
-      useImage(
-        `${proxyUrl}${proxyUrl.includes('?') ? '&' : '?'}v=${Date.now()}`,
-        'camera relayee',
-        'Le hub relaie le flux MJPEG local a travers la meme origine.'
-      );
-      cameraOpen.href = proxyUrl;
-      return;
-    }
-
-    if (window.location.protocol === 'https:') {
-      showPlaceholder(
-        'Le flux reste local: une page HTTPS ne peut pas afficher directement une source HTTP privee. Ouvre le dashboard local ou branche le relais /camera/live.',
-        'relais requis',
-        'Le lieu connait le dashboard camera et son MJPEG, mais attend encore son passage en HTTPS.'
-      );
-      return;
-    }
-
-    tryLocalCandidates();
-  }
-
+  initWindows();
   initCamera();
+  requestAnimationFrame(animate);
 })();
