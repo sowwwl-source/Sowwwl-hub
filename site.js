@@ -1,7 +1,8 @@
 (() => {
-  const localAddress = '192.168.1.22:5051';
+  const localAddress = '192.168.1.22:8081';
   const localBaseUrl = `http://${localAddress}`;
-  const localCandidates = ['', '/stream', '/video', '/mjpeg'].map((path) => `${localBaseUrl}${path}`);
+  const localDashboardUrl = `${localBaseUrl}/`;
+  const localCandidates = ['/stream.mjpg', '/stream', '/video', '/mjpeg'].map((path) => `${localBaseUrl}${path}`);
 
   const cameraImage = document.getElementById('cameraImage');
   const cameraFrame = document.getElementById('cameraFrame');
@@ -14,7 +15,7 @@
   const consoleTone = document.getElementById('consoleTone');
 
   cameraAddress.textContent = localAddress;
-  cameraOpen.href = `${localBaseUrl}/`;
+  cameraOpen.href = localDashboardUrl;
 
   cameraCopy.addEventListener('click', async () => {
     try {
@@ -78,9 +79,9 @@
   function tryLocalCandidates(index = 0) {
     if (index >= localCandidates.length) {
       useFrame(
-        `${localBaseUrl}/`,
-        'flux local a ouvrir',
-        'Le flux ne se laisse pas accrocher en image directe. Le lieu garde le portail local ouvert.'
+        localDashboardUrl,
+        'dashboard local a ouvrir',
+        'Le flux ne se laisse pas accrocher en image directe. Le lieu garde le dashboard local ouvert.'
       );
       return;
     }
@@ -92,7 +93,7 @@
       useImage(
         candidate,
         'camera locale en direct',
-        'Flux local accroche en direct depuis le meme reseau.'
+        'Flux MJPEG accroche en direct depuis le meme reseau.'
       );
     };
 
@@ -112,7 +113,7 @@
       useImage(
         `${proxyUrl}${proxyUrl.includes('?') ? '&' : '?'}v=${Date.now()}`,
         'camera relayee',
-        'Le hub relaie la camera locale a travers la meme origine.'
+        'Le hub relaie le flux MJPEG local a travers la meme origine.'
       );
       cameraOpen.href = proxyUrl;
       return;
@@ -120,9 +121,9 @@
 
     if (window.location.protocol === 'https:') {
       showPlaceholder(
-        'Le flux reste local: une page HTTPS ne peut pas afficher directement une source HTTP privee. Ouvre le flux local ou branche le relais /camera/live.',
+        'Le flux reste local: une page HTTPS ne peut pas afficher directement une source HTTP privee. Ouvre le dashboard local ou branche le relais /camera/live.',
         'relais requis',
-        'Le lieu connait l adresse camera, mais attend encore son passage en HTTPS.'
+        'Le lieu connait le dashboard camera et son MJPEG, mais attend encore son passage en HTTPS.'
       );
       return;
     }

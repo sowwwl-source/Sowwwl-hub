@@ -22,7 +22,7 @@ const FOCUS_INTERVAL_MS = envNumber('FOCUS_INTERVAL_MS', 8000);
 const CAPTURE_WIDTH = envNumber('CAPTURE_WIDTH', 1440);
 const CAPTURE_HEIGHT = envNumber('CAPTURE_HEIGHT', 960);
 const PLAYWRIGHT_EXECUTABLE_PATH = process.env.PLAYWRIGHT_EXECUTABLE_PATH;
-const CAMERA_STREAM_URL = normalizeCameraUrl(process.env.CAMERA_STREAM_URL || 'http://192.168.1.22:5051/');
+const CAMERA_STREAM_URL = normalizeCameraUrl(process.env.CAMERA_STREAM_URL || 'http://192.168.1.22:8081/stream.mjpg');
 
 const DOMAINS = [
   {

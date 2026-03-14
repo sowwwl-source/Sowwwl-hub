@@ -26,7 +26,7 @@
           <span class="status-dot"></span>
           <span>presence publique active</span>
         </div>
-        <p class="meta-line">camera source · 192.168.1.22:5051 · console vivante</p>
+        <p class="meta-line">camera source · 192.168.1.22:8081 · live1 vision dashboard</p>
       </div>
     </header>
 
@@ -49,8 +49,8 @@
         </div>
 
         <div class="camera-actions">
-          <a class="action-link action-link-primary" id="cameraOpen" href="http://192.168.1.22:5051/" target="_blank" rel="noreferrer">
-            ouvrir le flux local
+          <a class="action-link action-link-primary" id="cameraOpen" href="http://192.168.1.22:8081/" target="_blank" rel="noreferrer">
+            ouvrir le dashboard local
           </a>
           <button class="action-link action-link-secondary" id="cameraCopy" type="button">
             copier l adresse
@@ -70,7 +70,7 @@
         <div class="console-stack">
           <div class="console-row">
             <span>camera</span>
-            <strong id="cameraAddress">192.168.1.22:5051</strong>
+            <strong id="cameraAddress">192.168.1.22:8081</strong>
           </div>
           <div class="console-row">
             <span>relais</span>
@@ -106,8 +106,9 @@
         <p class="panel-kicker">mise en ligne</p>
         <h2>Branchement</h2>
         <p>
-          Depuis <code>https://sowwwl.org</code>, un flux <code>http://192.168.1.22:5051</code> demande un relais
-          <code>https</code> ou un hub sur le meme reseau. L interface est prete pour ce passage.
+          Depuis <code>https://sowwwl.org</code>, le dashboard local <code>http://192.168.1.22:8081</code> expose
+          le flux MJPEG sur <code>/stream.mjpg</code>. Il demande un relais <code>https</code> ou un hub sur le meme
+          reseau. L interface est prete pour ce passage.
         </p>
       </article>
     </section>
