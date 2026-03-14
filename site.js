@@ -4,7 +4,7 @@
   const SAFE_TOP = 170;
   const SAFE_BOTTOM = 90;
   const EDGE_PADDING = 18;
-  const POINTER_RADIUS = 260;
+  const POINTER_RADIUS = 300;
   const localDashboardUrl = 'http://192.168.1.22:8081/';
   const localStreamUrl = 'http://192.168.1.22:8081/stream.mjpg';
   const domains = [
@@ -13,8 +13,7 @@
       url: 'https://sowwwl.com',
       accent: '#f2b066',
       bridgeRole: 'foyer central',
-      bridgeLabel: 'Depuis .org, ouvrir le foyer minimal.',
-      bridgeFooter: 'Passage actif: sowwwl.org ouvre le foyer central de sowwwl.com.'
+      bridgeFooter: 'Passage actif: sowwwl.org garde le foyer central de sowwwl.com pres de la main.'
     },
     { name: 'sowwwl.art', url: 'https://sowwwl.art', accent: '#9ed8c8' },
     {
@@ -22,8 +21,7 @@
       url: 'https://sowwwl.net',
       accent: '#f08b74',
       bridgeRole: 'territoire praticable',
-      bridgeLabel: 'Depuis .org, marcher vers le voisinage sowwwl.net.',
-      bridgeFooter: 'Passage actif: sowwwl.org appelle la chambre praticable de sowwwl.net.'
+      bridgeFooter: 'Passage actif: sowwwl.org laisse venir la chambre praticable de sowwwl.net.'
     },
     { name: 'sowwwl.fr', url: 'https://sowwwl.fr', accent: '#c4bc8b' },
     {
@@ -31,8 +29,7 @@
       url: 'https://sowwwl.cloud',
       accent: '#8ab7d8',
       bridgeRole: 'veille distante',
-      bridgeLabel: 'Depuis .org, garder la veille cloud a portee.',
-      bridgeFooter: 'Passage actif: sowwwl.org garde sowwwl.cloud dans le champ proche.'
+      bridgeFooter: 'Passage actif: sowwwl.org tient sowwwl.cloud dans un champ proche, meme quand il vacille.'
     }
   ];
 
@@ -85,6 +82,20 @@
     return min + Math.random() * (max - min);
   }
 
+  function activeBridgeDomain() {
+    return domains.find((entry) => entry.name === state.activeBridge) || null;
+  }
+
+  function composeFooter(cameraMessage) {
+    const activeDomain = activeBridgeDomain();
+
+    if (!activeDomain?.bridgeFooter) {
+      return cameraMessage;
+    }
+
+    return `${activeDomain.bridgeFooter} ${cameraMessage}`;
+  }
+
   function sizeForViewport(index) {
     const basis = Math.min(window.innerWidth, window.innerHeight);
     const width = clamp(basis * (window.innerWidth < 700 ? 0.32 : 0.24) + index * 6, 180, 340);
@@ -125,10 +136,10 @@
       height,
       x: randomBetween(EDGE_PADDING, Math.max(EDGE_PADDING, window.innerWidth - width - EDGE_PADDING)),
       y: randomBetween(SAFE_TOP, Math.max(SAFE_TOP, window.innerHeight - SAFE_BOTTOM - height)),
-      vx: randomBetween(-110, 110) || 80,
-      vy: randomBetween(-92, 92) || -64,
-      spin: randomBetween(-18, 18) || 9,
-      angle: randomBetween(-8, 8),
+      vx: randomBetween(-74, 74) || 56,
+      vy: randomBetween(-60, 60) || -42,
+      spin: randomBetween(-11, 11) || 5,
+      angle: randomBetween(-5, 5),
       hover: false
     };
 
@@ -161,7 +172,7 @@
     item.el.style.zIndex = String(state.zCounter);
     item.vx *= multiplier;
     item.vy *= multiplier;
-    item.spin *= 1 + (multiplier - 1) * 1.4;
+    item.spin *= 1 + (multiplier - 1) * 1.15;
   }
 
   function focusWindow(item, withSummon = false) {
@@ -180,9 +191,9 @@
       const targetY = clamp(window.innerHeight * 0.36 - item.height * 0.5, SAFE_TOP, Math.max(SAFE_TOP, window.innerHeight - SAFE_BOTTOM - item.height));
       item.x = targetX;
       item.y = targetY;
-      item.vx += (Math.random() > 0.5 ? 1 : -1) * 26;
-      item.vy -= 18;
-      item.spin += Math.random() > 0.5 ? 8 : -8;
+      item.vx += (Math.random() > 0.5 ? 1 : -1) * 14;
+      item.vy -= 10;
+      item.spin += Math.random() > 0.5 ? 4.5 : -4.5;
       flashBounce(item);
     }
   }
@@ -205,8 +216,9 @@
     }
 
     state.activeBridge = domainName;
+    document.documentElement.style.setProperty('--bridge-current', domain.accent);
     updateBridgeCards();
-    footerText.textContent = domain.bridgeFooter || `Passage actif: ${domainName}.`;
+    footerText.textContent = composeFooter('Le fond et les autres passages continuent de respirer autour.');
   }
 
   function flashBounce(item) {
@@ -228,24 +240,24 @@
     if (item.x < EDGE_PADDING) {
       item.x = EDGE_PADDING;
       item.vx = Math.abs(item.vx);
-      item.spin += 8;
+      item.spin += 4;
       flashBounce(item);
     } else if (item.x > maxX) {
       item.x = maxX;
       item.vx = -Math.abs(item.vx);
-      item.spin -= 8;
+      item.spin -= 4;
       flashBounce(item);
     }
 
     if (item.y < SAFE_TOP) {
       item.y = SAFE_TOP;
       item.vy = Math.abs(item.vy);
-      item.spin += 6;
+      item.spin += 3.2;
       flashBounce(item);
     } else if (item.y > maxY) {
       item.y = maxY;
       item.vy = -Math.abs(item.vy);
-      item.spin -= 6;
+      item.spin -= 3.2;
       flashBounce(item);
     }
   }
@@ -279,8 +291,7 @@
     state.pointer.vy = 0;
     updatePointerAura();
     if (state.activeBridge) {
-      const activeDomain = domains.find((entry) => entry.name === state.activeBridge);
-      footerText.textContent = activeDomain?.bridgeFooter || footerText.textContent;
+      footerText.textContent = composeFooter('Le fond et les autres passages restent en tenue.');
     }
   }
 
@@ -357,15 +368,9 @@
     if (index >= sources.length) {
       cameraFallback.hidden = false;
       cameraBackground.hidden = true;
-      updateCameraState('fond camera en attente', true);
-      cameraNote.textContent = 'Le fond sowwwl-pi attend encore un relais image en meme origine. Nouvelle tentative automatique en cours.';
-      footerText.textContent = 'Fond de page: sowwwl-pi en veille de raccord. Le hub mosaïque reste disponible via /hub/.';
-      if (state.activeBridge) {
-        const activeDomain = domains.find((entry) => entry.name === state.activeBridge);
-        if (activeDomain?.bridgeFooter) {
-          footerText.textContent = `${activeDomain.bridgeFooter} Fond sowwwl-pi en veille de raccord.`;
-        }
-      }
+      updateCameraState('fond en attente', true);
+      cameraNote.textContent = 'Le fond sowwwl-pi cherche encore un relais en meme origine. Nouvelle tentative automatique en cours.';
+      footerText.textContent = composeFooter('Fond de page: sowwwl-pi encore en veille de raccord. Le moniteur reste sur /hub/.');
       scheduleCameraRetry();
       return;
     }
@@ -397,20 +402,14 @@
         state.camera.activeSource = '';
         cameraFallback.hidden = false;
         cameraBackground.hidden = true;
-        updateCameraState('fond camera en reconnexion', true);
+        updateCameraState('fond en reconnexion', true);
         cameraNote.textContent = 'Le relais sowwwl-pi s est interrompu. Nouvelle tentative automatique.';
-        footerText.textContent = 'Fond de page: reconnexion sowwwl-pi en cours.';
+        footerText.textContent = composeFooter('Fond de page: reconnexion sowwwl-pi en cours.');
         scheduleCameraRetry(2500);
       };
-      updateCameraState('fond sowwwl-pi actif');
+      updateCameraState('fond vivant');
       cameraNote.textContent = `Fond direct branche sur ${candidate.includes('/camera/live') ? '/camera/live' : 'le flux local MJPEG'}.`;
-      footerText.textContent = 'Fond de page: sowwwl-pi vivant. Le moniteur de captures reste visible via /hub/.';
-      if (state.activeBridge) {
-        const activeDomain = domains.find((entry) => entry.name === state.activeBridge);
-        if (activeDomain?.bridgeFooter) {
-          footerText.textContent = `${activeDomain.bridgeFooter} Fond de page: sowwwl-pi vivant.`;
-        }
-      }
+      footerText.textContent = composeFooter('Fond de page: sowwwl-pi tient la piece en continu.');
     };
 
     probe.onerror = () => {
@@ -487,9 +486,11 @@
     state.items.forEach((item, index) => {
       const cx = item.x + item.width / 2;
       const cy = item.y + item.height / 2;
+      const settleX = window.innerWidth * 0.5;
+      const settleY = window.innerHeight * 0.56;
 
-      item.vx += state.tilt.x * 18 * dt;
-      item.vy += state.tilt.y * 22 * dt;
+      item.vx += state.tilt.x * 11 * dt;
+      item.vy += state.tilt.y * 13 * dt;
 
       if (state.pointer.active) {
         const dx = cx - state.pointer.x;
@@ -497,22 +498,24 @@
         const distance = Math.hypot(dx, dy);
 
         if (distance < POINTER_RADIUS) {
-          const strength = (1 - distance / POINTER_RADIUS) * 220;
+          const strength = (1 - distance / POINTER_RADIUS) * 132;
           const nx = dx / (distance || 1);
           const ny = dy / (distance || 1);
-          item.vx += (nx * strength + state.pointer.vx * 0.9) * dt;
-          item.vy += (ny * strength + state.pointer.vy * 0.9) * dt;
-          item.spin += (state.pointer.vx + state.pointer.vy) * 0.005 * dt * 60;
+          item.vx += (nx * strength + state.pointer.vx * 0.52) * dt;
+          item.vy += (ny * strength + state.pointer.vy * 0.52) * dt;
+          item.spin += (state.pointer.vx + state.pointer.vy) * 0.0022 * dt * 60;
         }
       }
 
-      item.vx += Math.sin((now * 0.0012) + index) * 0.8 * dt;
-      item.vy += Math.cos((now * 0.0015) + index * 0.7) * 0.7 * dt;
+      item.vx += Math.sin((now * 0.00085) + index) * 0.48 * dt;
+      item.vy += Math.cos((now * 0.00115) + index * 0.7) * 0.44 * dt;
+      item.vx += (settleX - cx) * 0.011 * dt;
+      item.vy += (settleY - cy) * 0.008 * dt;
 
-      const friction = item.hover ? 0.992 : 0.996;
+      const friction = item.hover ? 0.989 : 0.993;
       item.vx *= Math.pow(friction, dt * 60);
       item.vy *= Math.pow(friction, dt * 60);
-      item.spin *= Math.pow(0.996, dt * 60);
+      item.spin *= Math.pow(0.991, dt * 60);
 
       item.x += item.vx * dt;
       item.y += item.vy * dt;

@@ -1,14 +1,18 @@
 :root {
-  --bg-deep: #050b10;
-  --bg-mid: #0a1620;
-  --line: rgba(255, 255, 255, 0.12);
-  --line-soft: rgba(255, 255, 255, 0.08);
-  --text-main: #f7f1e6;
-  --text-soft: rgba(247, 241, 230, 0.8);
-  --text-faint: rgba(247, 241, 230, 0.58);
-  --accent-warm: #f2b066;
-  --accent-cool: #9ed8c8;
-  --accent-alert: #f08b74;
+  --bg-deep: #160f0d;
+  --bg-mid: #241613;
+  --bg-earth: #38231c;
+  --line: rgba(246, 233, 213, 0.15);
+  --line-soft: rgba(246, 233, 213, 0.09);
+  --text-main: #f6e9d5;
+  --text-soft: rgba(246, 233, 213, 0.8);
+  --text-faint: rgba(246, 233, 213, 0.58);
+  --accent-warm: #cfa46a;
+  --accent-cool: #8da88a;
+  --accent-alert: #9b5647;
+  --accent-metal: #b69a78;
+  --accent-wine: #6d2c29;
+  --bridge-current: #cfa46a;
   --mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
 }
@@ -22,7 +26,7 @@ body {
 body {
   overflow: hidden;
   color: var(--text-main);
-  background: linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-mid) 48%, #03070b 100%);
+  background: linear-gradient(155deg, #120c0a 0%, var(--bg-mid) 42%, #090707 100%);
   font-family: var(--serif);
 }
 
@@ -38,15 +42,18 @@ body {
 .camera-background {
   overflow: hidden;
   background:
-    radial-gradient(circle at 20% 20%, rgba(242, 176, 102, 0.16), transparent 24%),
-    radial-gradient(circle at 82% 18%, rgba(158, 216, 200, 0.15), transparent 22%),
-    linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-mid) 52%, #03070b 100%);
+    radial-gradient(circle at 18% 20%, rgba(207, 164, 106, 0.17), transparent 24%),
+    radial-gradient(circle at 82% 18%, rgba(141, 168, 138, 0.13), transparent 22%),
+    radial-gradient(circle at 52% 86%, rgba(109, 44, 41, 0.2), transparent 28%),
+    linear-gradient(160deg, #130d0c 0%, var(--bg-mid) 52%, #070505 100%);
 }
 
 .camera-background__image,
 .camera-background__fallback,
+.camera-background__stain,
 .camera-background__veil,
 .camera-background__scan,
+.camera-background__grainlines,
 .camera-background__glow {
   position: absolute;
   inset: 0;
@@ -56,8 +63,8 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scale(1.08);
-  filter: saturate(0.72) contrast(1.06) brightness(0.34) blur(2px);
+  transform: scale(1.09);
+  filter: saturate(0.62) sepia(0.18) contrast(1.02) brightness(0.3) blur(2px);
 }
 
 .camera-background__fallback {
@@ -77,25 +84,46 @@ body {
   margin: 0;
 }
 
+.camera-background__stain {
+  background:
+    radial-gradient(circle at 18% 70%, rgba(109, 44, 41, 0.28), transparent 25%),
+    radial-gradient(circle at 78% 16%, rgba(207, 164, 106, 0.16), transparent 23%),
+    linear-gradient(180deg, rgba(17, 11, 10, 0.12), rgba(17, 11, 10, 0.42));
+  mix-blend-mode: screen;
+  opacity: 0.92;
+}
+
 .camera-background__veil {
   background:
-    radial-gradient(circle at center, transparent 0%, rgba(4, 10, 15, 0.18) 52%, rgba(4, 10, 15, 0.84) 100%),
-    linear-gradient(180deg, rgba(4, 10, 15, 0.16), rgba(4, 10, 15, 0.56));
+    radial-gradient(circle at center, transparent 0%, rgba(11, 8, 7, 0.16) 50%, rgba(11, 8, 7, 0.84) 100%),
+    linear-gradient(180deg, rgba(17, 11, 10, 0.14), rgba(17, 11, 10, 0.62)),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.06), transparent 28%, transparent 72%, rgba(0, 0, 0, 0.08));
 }
 
 .camera-background__scan {
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: 100% 4px, 28px 28px;
-  mix-blend-mode: screen;
-  opacity: 0.15;
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 100% 4px, 36px 36px;
+  mix-blend-mode: soft-light;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.camera-background__grainlines {
+  background:
+    repeating-linear-gradient(
+      112deg,
+      rgba(255, 255, 255, 0.018) 0 1px,
+      rgba(0, 0, 0, 0) 1px 16px
+    );
+  opacity: 0.18;
   pointer-events: none;
 }
 
 .camera-background__glow {
   filter: blur(40px);
-  opacity: 0.22;
+  opacity: 0.2;
   pointer-events: none;
 }
 
@@ -104,7 +132,7 @@ body {
   width: 36vw;
   height: 36vw;
   border-radius: 50%;
-  background: rgba(242, 176, 102, 0.66);
+  background: rgba(143, 54, 45, 0.46);
   animation: driftWarm 14s ease-in-out infinite alternate;
 }
 
@@ -113,7 +141,7 @@ body {
   width: 32vw;
   height: 32vw;
   border-radius: 50%;
-  background: rgba(158, 216, 200, 0.42);
+  background: rgba(141, 168, 138, 0.24);
   animation: driftCool 18s ease-in-out infinite alternate;
 }
 
@@ -123,7 +151,7 @@ body {
   height: 280px;
   margin: -140px 0 0 -140px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.14), transparent 66%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--bridge-current) 26%, rgba(255, 255, 255, 0.1)), transparent 66%);
   opacity: 0;
   transform: translate3d(-999px, -999px, 0);
   transition: opacity 200ms ease;
@@ -164,7 +192,9 @@ body {
   padding: 18px 20px;
   border-radius: 24px;
   border: 1px solid var(--line);
-  background: rgba(5, 11, 16, 0.48);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 34%),
+    rgba(22, 15, 13, 0.58);
   backdrop-filter: blur(16px);
   box-shadow: 0 22px 70px rgba(0, 0, 0, 0.3);
 }
@@ -176,7 +206,7 @@ body {
   font-size: 0.74rem;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--accent-warm);
+  color: color-mix(in srgb, var(--accent-warm) 74%, white 8%);
 }
 
 .brand h1 {
@@ -184,6 +214,7 @@ body {
   max-width: 11ch;
   font-size: clamp(2.4rem, 6vw, 5.6rem);
   line-height: 0.94;
+  text-wrap: balance;
 }
 
 .brand__lede,
@@ -194,9 +225,17 @@ body {
   color: var(--text-soft);
 }
 
+.brand__aside {
+  margin: 16px 0 0;
+  max-width: 34ch;
+  color: var(--text-faint);
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
 .control-note a {
   color: var(--text-main);
-  text-decoration-color: rgba(247, 241, 230, 0.35);
+  text-decoration-color: rgba(246, 233, 213, 0.35);
 }
 
 .controls {
@@ -220,7 +259,7 @@ body {
   padding: 11px 14px;
   border-radius: 999px;
   border: 1px solid var(--line-soft);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(246, 233, 213, 0.05);
   color: var(--accent-cool);
   font-family: var(--mono);
   font-size: 0.78rem;
@@ -229,7 +268,7 @@ body {
 }
 
 .status-pill--secondary {
-  color: var(--accent-warm);
+  color: var(--accent-metal);
 }
 
 .status-pill--warn {
@@ -258,7 +297,7 @@ body {
   border-radius: 999px;
   border: 1px solid var(--line-soft);
   padding: 0 16px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(246, 233, 213, 0.05);
   color: var(--text-main);
   text-decoration: none;
   font-family: var(--mono);
@@ -272,8 +311,8 @@ body {
 .control-button:hover,
 .control-link:hover {
   transform: translateY(-2px);
-  border-color: var(--accent-warm);
-  background: rgba(255, 255, 255, 0.09);
+  border-color: color-mix(in srgb, var(--bridge-current) 72%, white 18%);
+  background: rgba(246, 233, 213, 0.09);
 }
 
 .legend {
@@ -288,7 +327,7 @@ body {
   margin: 0;
   max-width: 14ch;
   font-size: clamp(1.4rem, 2.7vw, 2.6rem);
-  line-height: 1.02;
+  line-height: 1.06;
 }
 
 .bridges__intro p:last-child {
@@ -309,11 +348,11 @@ body {
   gap: 12px;
   min-height: 214px;
   padding: 18px;
-  border-color: color-mix(in srgb, var(--bridge-accent) 24%, rgba(255, 255, 255, 0.18));
+  border-color: color-mix(in srgb, var(--bridge-accent) 24%, rgba(246, 233, 213, 0.18));
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 38%),
     radial-gradient(circle at top left, color-mix(in srgb, var(--bridge-accent) 22%, transparent), transparent 42%),
-    rgba(5, 11, 16, 0.6);
+    rgba(29, 18, 15, 0.72);
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
 }
 
@@ -369,7 +408,7 @@ body {
   padding: 0 14px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--bridge-accent) 36%, rgba(255, 255, 255, 0.18));
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(246, 233, 213, 0.05);
   color: var(--text-main);
   font-family: var(--mono);
   font-size: 0.72rem;
@@ -384,7 +423,7 @@ body {
 .bridge-card__link:hover {
   transform: translateY(-2px);
   border-color: var(--bridge-accent);
-  background: rgba(255, 255, 255, 0.11);
+  background: rgba(246, 233, 213, 0.11);
 }
 
 .playfield {
@@ -401,10 +440,10 @@ body {
   pointer-events: auto;
   border-radius: 22px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(246, 233, 213, 0.16);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
-    rgba(6, 11, 16, 0.82);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03)),
+    rgba(20, 13, 12, 0.84);
   box-shadow: 0 26px 70px rgba(0, 0, 0, 0.36);
   transform-origin: center center;
   will-change: transform;
@@ -415,12 +454,12 @@ body {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 24%, transparent 72%, rgba(255, 255, 255, 0.06));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 24%, transparent 72%, rgba(255, 255, 255, 0.04));
   pointer-events: none;
 }
 
 .dvd-window.is-hit {
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.34), 0 28px 90px rgba(0, 0, 0, 0.44);
+  box-shadow: 0 0 0 1px rgba(246, 233, 213, 0.26), 0 28px 90px rgba(0, 0, 0, 0.44);
 }
 
 .dvd-window.is-hovered {
@@ -430,7 +469,7 @@ body {
 .dvd-window.is-bridged {
   border-color: color-mix(in srgb, var(--window-accent) 76%, white 24%);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--window-accent) 58%, rgba(255, 255, 255, 0.3)),
+    0 0 0 1px color-mix(in srgb, var(--window-accent) 58%, rgba(246, 233, 213, 0.3)),
     0 32px 92px rgba(0, 0, 0, 0.48);
 }
 
@@ -443,7 +482,7 @@ body {
   gap: 12px;
   align-items: center;
   padding: 10px 12px;
-  background: linear-gradient(180deg, rgba(5, 11, 16, 0.9), rgba(5, 11, 16, 0.56));
+  background: linear-gradient(180deg, rgba(22, 15, 13, 0.92), rgba(22, 15, 13, 0.56));
   color: var(--text-main);
   font-family: var(--mono);
   font-size: 0.7rem;
@@ -471,7 +510,7 @@ body {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: rgba(2, 6, 10, 0.9);
+  background: rgba(10, 8, 7, 0.92);
 }
 
 .dvd-window__surface iframe {
@@ -484,7 +523,7 @@ body {
   transform: scale(var(--frame-scale));
   transform-origin: 0 0;
   pointer-events: none;
-  background: #05090d;
+  background: #0d0b0a;
 }
 
 .dvd-window__grain,
@@ -497,8 +536,9 @@ body {
 .dvd-window__grain {
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 18%, transparent 80%, rgba(255, 255, 255, 0.04)),
-    radial-gradient(circle at 50% 120%, rgba(0, 0, 0, 0.52), transparent 58%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 18%, transparent 80%, rgba(255, 255, 255, 0.04)),
+    radial-gradient(circle at 50% 120%, rgba(0, 0, 0, 0.52), transparent 58%),
+    linear-gradient(0deg, rgba(109, 44, 41, 0.12), transparent 26%);
   pointer-events: none;
 }
 
@@ -513,7 +553,7 @@ body {
   color: var(--text-soft);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  background: linear-gradient(180deg, transparent, rgba(5, 11, 16, 0.92));
+  background: linear-gradient(180deg, transparent, rgba(22, 15, 13, 0.94));
 }
 
 .dvd-window__label a {
@@ -543,8 +583,10 @@ body {
   max-width: 58ch;
   padding: 12px 16px;
   border-radius: 999px;
-  border: 1px solid var(--line);
-  background: rgba(5, 11, 16, 0.46);
+  border: 1px solid color-mix(in srgb, var(--bridge-current) 24%, var(--line));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 60%),
+    rgba(22, 15, 13, 0.5);
   color: var(--text-faint);
   backdrop-filter: blur(16px);
   font-family: var(--mono);

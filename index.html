@@ -3,19 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>O. s habite</title>
-  <meta name="theme-color" content="#050b10">
+  <title>O. comptoir vivant</title>
+  <meta name="theme-color" content="#160f0d">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="camera-background">
     <img id="cameraBackground" class="camera-background__image" alt="" hidden>
     <div id="cameraFallback" class="camera-background__fallback">
-      <p>sowwwl-pi en attente de relais visuel.</p>
-      <p>On regle le fond vivant ensemble des que /camera/live repond.</p>
+      <p>sowwwl-pi attend encore de prendre place.</p>
+      <p>Le comptoir reste ouvert. Le fond vivant entre des que /camera/live repond.</p>
     </div>
+    <div class="camera-background__stain"></div>
     <div class="camera-background__veil"></div>
     <div class="camera-background__scan"></div>
+    <div class="camera-background__grainlines"></div>
     <div class="camera-background__glow camera-background__glow--warm"></div>
     <div class="camera-background__glow camera-background__glow--cool"></div>
   </div>
@@ -25,10 +27,13 @@
   <main class="hud">
     <header class="hud__top">
       <div class="brand">
-        <p class="brand__eyebrow">SOWWWL / O. s habite</p>
-        <h1>Le hub devient un ecran de veille habite.</h1>
+        <p class="brand__eyebrow">SOWWWL / O. comptoir vivant</p>
+        <h1>Le hub prend la forme d un comptoir vivant.</h1>
         <p class="brand__lede">
-          Les seuils flottent, rebondissent, pivotent, et reagissent au geste, a la souris, au souffle du telephone.
+          Les seuils viennent se poser, se froler et se repondre. Un peu de fer, un peu de terre, un peu de veille, et juste assez de chaleur pour que tout tienne ensemble.
+        </p>
+        <p class="brand__aside">
+          Ici, on n empile pas des liens: on tient des passages a portee de main.
         </p>
       </div>
 
@@ -36,17 +41,17 @@
         <div class="status-cluster">
           <div class="status-pill" id="cameraState">
             <span class="status-pill__dot"></span>
-            <span>camera prete a entrer</span>
+            <span>fond en approche</span>
           </div>
           <div class="status-pill status-pill--secondary" id="motionState">
             <span class="status-pill__dot"></span>
-            <span>mouvement inactif</span>
+            <span>geste au repos</span>
           </div>
         </div>
 
         <div class="control-row">
           <button class="control-button" id="motionToggle" type="button">
-            activer le mouvement
+            ouvrir le geste
           </button>
           <a class="control-link" id="cameraOpen" href="http://192.168.1.22:8081/" target="_blank" rel="noreferrer">
             ouvrir sowwwl-pi
@@ -54,33 +59,32 @@
         </div>
 
         <p class="control-note" id="cameraNote">
-          Fond vise: sowwwl-pi via /camera/live. Moniteur de captures: <a href="/hub/">/hub/</a>. Source locale: 192.168.1.22:8081.
+          Fond vise: sowwwl-pi via /camera/live. Moniteur de captures: <a href="/hub/">/hub/</a>. La chambre locale reste sur 192.168.1.22:8081.
         </p>
       </div>
     </header>
 
     <section class="legend">
       <div class="legend__block">
-        <p class="legend__kicker">visions directes</p>
+        <p class="legend__kicker">presences posees</p>
         <p>
-          sowwwl.com, sowwwl.art, sowwwl.net, sowwwl.fr et sowwwl.cloud flottent comme des fenetres vivantes.
+          sowwwl.com, sowwwl.art, sowwwl.net, sowwwl.fr et sowwwl.cloud ne sont pas montres comme un tableau de bord. Ils demeurent ici comme des presences posees sur la meme table.
         </p>
       </div>
       <div class="legend__block">
-        <p class="legend__kicker">gestes</p>
+        <p class="legend__kicker">approches</p>
         <p>
-          Le passage de souris plie leurs trajectoires. L accelerometre ajoute une gravite mobile sur iPhone et iPad.
+          Le passage de souris inflechit leur course. Le souffle du telephone ajoute une gravite legere, presque une maniere de rapprocher les choses sans les saisir.
         </p>
       </div>
     </section>
 
     <section class="bridges" aria-labelledby="bridgesTitle">
       <div class="bridges__intro">
-        <p class="legend__kicker">passages</p>
-        <h2 id="bridgesTitle">sowwwl.org tient les liens vers .com, .net et .cloud</h2>
+        <p class="legend__kicker">table des passages</p>
+        <h2 id="bridgesTitle">sowwwl.org tient .com, .net et .cloud comme trois proximites distinctes</h2>
         <p>
-          Trois portes principales restent a portee: le foyer, le voisinage praticable, et la veille distante.
-          Elles existent comme raccourcis editoriaux et comme appels directs aux fenetres flottantes.
+          Le foyer, la marche, la veille. Trois humeurs du meme lieu. Ici, les liens deviennent des gestes d invitation: on approche, on fait place, on garde pres.
         </p>
       </div>
 
@@ -89,10 +93,10 @@
           <p class="bridge-card__kicker">foyer central</p>
           <h3>sowwwl.com</h3>
           <p class="bridge-card__copy">
-            Le point d entree le plus nu. Depuis ici, on passe du lieu-hub vers le reseau minimal.
+            Le point d entree le plus nu, le plus net. Depuis `.org`, on y revient pour reprendre le souffle de base.
           </p>
           <div class="bridge-card__actions">
-            <button class="bridge-card__button" type="button" data-bridge-action="summon" data-domain="sowwwl.com">faire venir</button>
+            <button class="bridge-card__button" type="button" data-bridge-action="summon" data-domain="sowwwl.com">approcher</button>
             <a class="bridge-card__link" href="https://sowwwl.com" target="_blank" rel="noreferrer">ouvrir</a>
           </div>
         </article>
@@ -101,10 +105,10 @@
           <p class="bridge-card__kicker">territoire praticable</p>
           <h3>sowwwl.net</h3>
           <p class="bridge-card__copy">
-            Le passage ou le geste prend plus de place. `.org` l appelle comme chambre de marche et d usage.
+            Ici le geste prend plus de place. `.org` l appelle comme la partie du lieu ou l on marche, porte quelque chose, revient.
           </p>
           <div class="bridge-card__actions">
-            <button class="bridge-card__button" type="button" data-bridge-action="summon" data-domain="sowwwl.net">faire venir</button>
+            <button class="bridge-card__button" type="button" data-bridge-action="summon" data-domain="sowwwl.net">approcher</button>
             <a class="bridge-card__link" href="https://sowwwl.net" target="_blank" rel="noreferrer">ouvrir</a>
           </div>
         </article>
@@ -113,10 +117,10 @@
           <p class="bridge-card__kicker">veille distante</p>
           <h3>sowwwl.cloud</h3>
           <p class="bridge-card__copy">
-            Le seuil le plus instable. `.org` le garde pres de soi comme une presence a surveiller sans l effacer.
+            Le seuil le plus lointain et le plus instable. `.org` le garde a portee de regard, comme on garde une lumiere encore faible mais necessaire.
           </p>
           <div class="bridge-card__actions">
-            <button class="bridge-card__button" type="button" data-bridge-action="summon" data-domain="sowwwl.cloud">faire venir</button>
+            <button class="bridge-card__button" type="button" data-bridge-action="summon" data-domain="sowwwl.cloud">approcher</button>
             <a class="bridge-card__link" href="https://sowwwl.cloud" target="_blank" rel="noreferrer">ouvrir</a>
           </div>
         </article>
@@ -127,7 +131,7 @@
   <section class="playfield" id="playfield" aria-label="Visions flottantes des domaines"></section>
 
   <footer class="footer-hud">
-    <p id="footerText">Fond de page: direct de sowwwl-pi a arranger ensemble. Moniteur des captures: /hub/.</p>
+    <p id="footerText">Fond de page: sowwwl-pi prend place doucement. Les passages restent a portee de main.</p>
   </footer>
 
   <script src="site.js"></script>
