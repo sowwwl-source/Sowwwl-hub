@@ -7,13 +7,17 @@ services:
     environment:
       - PORT=3311
       - NODE_ENV=production
+      - PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium
+      - CAPTURE_INTERVAL_MS=1000
+      - DOMAIN_OFFSET_MS=11
+      - FOCUS_INTERVAL_MS=8000
     restart: unless-stopped
     init: true
     ipc: host
     networks:
       - sowwwl-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3311/healthz"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3311/healthz || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

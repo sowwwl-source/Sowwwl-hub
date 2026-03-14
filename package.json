@@ -1,12 +1,14 @@
 {
   "name": "sowwwl-mosaic-monitor",
   "version": "1.0.0",
-  "description": "SOWWWL Mosaic Monitor - Live dashboard for sowwwl domains",
+  "description": "SOWWWL Mosaic Monitor - live guided dashboard for sowwwl domains",
   "type": "module",
   "main": "server.mjs",
   "scripts": {
     "start": "node server.mjs",
-    "dev": "node server.mjs"
+    "dev": "node server.mjs",
+    "docker:up": "docker compose up -d --build",
+    "docker:logs": "docker compose logs -f app caddy"
   },
   "keywords": ["sowwwl", "monitor", "mosaic"],
   "author": "",

@@ -1,31 +1,8 @@
-# Domaine principal (remplace DOMAIN par sowwwl.org)
-{$DOMAIN}:443 {
-  encode gzip
-  
-  # Revers proxy vers le serveur Node.js
-  reverse_proxy app:3311 {
-    header_uri -x-forwarded-prefix
-  }
-  
-  # Configuration TLS automatique via Let's Encrypt
-  tls {
-    on_demand
-  }
-}
-
-# Redirection HTTP vers HTTPS
-{$DOMAIN}:80 {
-  redir https://{host}{uri} permanent
-}
-
-# Wildcard pour www et autres sous-domaines
-www.{$DOMAIN}:443 {
+www.{$DOMAIN} {
   redir https://{$DOMAIN}{uri} permanent
-  tls {
-    on_demand
-  }
 }
 
-www.{$DOMAIN}:80 {
-  redir https://{$DOMAIN}{uri} permanent
+{$DOMAIN} {
+  encode zstd gzip
+  reverse_proxy app:3311
 }

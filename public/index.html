@@ -3,29 +3,85 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SOWWWL Mosaic Monitor</title>
+  <title>SOWWWL Habitat</title>
+  <meta name="theme-color" content="#09131b">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>SOWWWL</h1>
-      <p class="subtitle">Mosaic Monitor - Vision uxorilocale</p>
-      <div class="status" id="status">Initialisation...</div>
+  <div class="page-shell">
+    <header class="masthead">
+      <div class="masthead-copy">
+        <p class="eyebrow">SOWWWL hub / O. s habite</p>
+        <h1>O. est un lieu a habiter</h1>
+        <p class="lede" id="guideText">
+          Pas une interface a parcourir. Une presence en direct dans les cinq domaines, avec une respiration de captures decalee.
+        </p>
+      </div>
+
+      <div class="masthead-status">
+        <div class="status-pill is-loading" id="status">Initialisation du hub...</div>
+        <p class="status-meta" id="captureMeta">5 domaines · 1 fps · decalage 11 ms</p>
+      </div>
     </header>
 
-    <main>
-      <div class="mosaic" id="mosaic">
-        <!-- Les tuiles de domaines seront générées ici -->
-      </div>
+    <main class="layout">
+      <section class="focus-panel">
+        <div class="focus-copy">
+          <p class="section-kicker">Presence en cours</p>
+          <h2 id="focusName">SOWWWL</h2>
+          <p class="focus-url" id="focusUrl">https://sowwwl.com</p>
+          <p class="focus-story" id="focusStory">
+            Le hub s ouvre comme une chambre vivante: il accueille chaque seuil, l un apres l autre, sans exiger de navigation.
+          </p>
+          <p class="focus-note" id="focusNote">Premiere presence en approche.</p>
+
+          <div class="metrics">
+            <span id="lastWaveAt">Aucune vague recue</span>
+            <span id="activityCount">0/5 domaines a jour</span>
+          </div>
+        </div>
+
+        <div class="focus-frame">
+          <div class="frame-aura"></div>
+          <img id="focusImage" alt="" hidden>
+          <div class="focus-placeholder" id="focusPlaceholder">
+            Les captures s allument des que Chromium prend place.
+          </div>
+        </div>
+      </section>
+
+      <section class="journey-section">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Seuils habites</p>
+            <h3>Les chambres du reseau</h3>
+          </div>
+          <p class="section-note">Le regard se deplace lentement. Clique une tuile si tu veux demeurer ailleurs.</p>
+        </div>
+        <div class="journey-list" id="journeyList"></div>
+      </section>
+
+      <section class="mosaic-section">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Live mosaic</p>
+            <h3>Respiration decalee</h3>
+          </div>
+          <p class="section-note">1 frame par seconde, 11 ms entre les cinq seuils.</p>
+        </div>
+
+        <div class="mosaic" id="mosaic"></div>
+      </section>
     </main>
 
-    <footer>
-      <p>Live capture 1 fps • Décalage 11ms • Visite guidée auto</p>
+    <footer class="footer">
+      <p>
+        cinq seuils · une meme habitation
+      </p>
     </footer>
   </div>
 
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
