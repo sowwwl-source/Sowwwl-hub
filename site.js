@@ -8,11 +8,32 @@
   const localDashboardUrl = 'http://192.168.1.22:8081/';
   const localStreamUrl = 'http://192.168.1.22:8081/stream.mjpg';
   const domains = [
-    { name: 'sowwwl.com', url: 'https://sowwwl.com', accent: '#f2b066' },
+    {
+      name: 'sowwwl.com',
+      url: 'https://sowwwl.com',
+      accent: '#f2b066',
+      bridgeRole: 'foyer central',
+      bridgeLabel: 'Depuis .org, ouvrir le foyer minimal.',
+      bridgeFooter: 'Passage actif: sowwwl.org ouvre le foyer central de sowwwl.com.'
+    },
     { name: 'sowwwl.art', url: 'https://sowwwl.art', accent: '#9ed8c8' },
-    { name: 'sowwwl.net', url: 'https://sowwwl.net', accent: '#f08b74' },
+    {
+      name: 'sowwwl.net',
+      url: 'https://sowwwl.net',
+      accent: '#f08b74',
+      bridgeRole: 'territoire praticable',
+      bridgeLabel: 'Depuis .org, marcher vers le voisinage sowwwl.net.',
+      bridgeFooter: 'Passage actif: sowwwl.org appelle la chambre praticable de sowwwl.net.'
+    },
     { name: 'sowwwl.fr', url: 'https://sowwwl.fr', accent: '#c4bc8b' },
-    { name: 'sowwwl.cloud', url: 'https://sowwwl.cloud', accent: '#8ab7d8' }
+    {
+      name: 'sowwwl.cloud',
+      url: 'https://sowwwl.cloud',
+      accent: '#8ab7d8',
+      bridgeRole: 'veille distante',
+      bridgeLabel: 'Depuis .org, garder la veille cloud a portee.',
+      bridgeFooter: 'Passage actif: sowwwl.org garde sowwwl.cloud dans le champ proche.'
+    }
   ];
 
   const playfield = document.getElementById('playfield');
@@ -25,6 +46,7 @@
   const cameraNote = document.getElementById('cameraNote');
   const footerText = document.getElementById('footerText');
   const pointerAura = document.getElementById('pointerAura');
+  const bridgeGrid = document.getElementById('bridgeGrid');
 
   const state = {
     items: [],
@@ -51,7 +73,8 @@
       retryTimer: 0,
       attemptToken: 0,
       activeSource: ''
-    }
+    },
+    activeBridge: ''
   };
 
   function clamp(value, min, max) {
@@ -109,14 +132,15 @@
       hover: false
     };
 
+    el.dataset.domain = domain.name;
+
     el.addEventListener('pointerenter', () => {
       item.hover = true;
-      state.zCounter += 1;
-      item.el.style.zIndex = String(state.zCounter);
-      item.vx *= 1.08;
-      item.vy *= 1.08;
-      item.spin *= 1.18;
+      bringWindowForward(item, 1.08);
       item.el.classList.add('is-hovered');
+      if (domain.bridgeRole) {
+        activateBridge(domain.name);
+      }
     });
 
     el.addEventListener('pointerleave', () => {
@@ -126,6 +150,63 @@
 
     playfield.appendChild(el);
     return item;
+  }
+
+  function findItem(domainName) {
+    return state.items.find((item) => item.domain.name === domainName) || null;
+  }
+
+  function bringWindowForward(item, multiplier = 1.14) {
+    state.zCounter += 1;
+    item.el.style.zIndex = String(state.zCounter);
+    item.vx *= multiplier;
+    item.vy *= multiplier;
+    item.spin *= 1 + (multiplier - 1) * 1.4;
+  }
+
+  function focusWindow(item, withSummon = false) {
+    if (!item) {
+      return;
+    }
+
+    bringWindowForward(item, withSummon ? 1.2 : 1.1);
+    item.el.classList.add('is-bridged');
+    window.setTimeout(() => {
+      item.el.classList.remove('is-bridged');
+    }, 1200);
+
+    if (withSummon) {
+      const targetX = clamp((window.innerWidth - item.width) * 0.5, EDGE_PADDING, Math.max(EDGE_PADDING, window.innerWidth - item.width - EDGE_PADDING));
+      const targetY = clamp(window.innerHeight * 0.36 - item.height * 0.5, SAFE_TOP, Math.max(SAFE_TOP, window.innerHeight - SAFE_BOTTOM - item.height));
+      item.x = targetX;
+      item.y = targetY;
+      item.vx += (Math.random() > 0.5 ? 1 : -1) * 26;
+      item.vy -= 18;
+      item.spin += Math.random() > 0.5 ? 8 : -8;
+      flashBounce(item);
+    }
+  }
+
+  function updateBridgeCards() {
+    if (!bridgeGrid) {
+      return;
+    }
+
+    bridgeGrid.querySelectorAll('.bridge-card').forEach((card) => {
+      card.classList.toggle('is-active', card.dataset.domain === state.activeBridge);
+    });
+  }
+
+  function activateBridge(domainName) {
+    const domain = domains.find((entry) => entry.name === domainName);
+
+    if (!domain?.bridgeRole) {
+      return;
+    }
+
+    state.activeBridge = domainName;
+    updateBridgeCards();
+    footerText.textContent = domain.bridgeFooter || `Passage actif: ${domainName}.`;
   }
 
   function flashBounce(item) {
@@ -197,6 +278,10 @@
     state.pointer.vx = 0;
     state.pointer.vy = 0;
     updatePointerAura();
+    if (state.activeBridge) {
+      const activeDomain = domains.find((entry) => entry.name === state.activeBridge);
+      footerText.textContent = activeDomain?.bridgeFooter || footerText.textContent;
+    }
   }
 
   function setMotionState(message, mode) {
@@ -275,6 +360,12 @@
       updateCameraState('fond camera en attente', true);
       cameraNote.textContent = 'Le fond sowwwl-pi attend encore un relais image en meme origine. Nouvelle tentative automatique en cours.';
       footerText.textContent = 'Fond de page: sowwwl-pi en veille de raccord. Le hub mosaïque reste disponible via /hub/.';
+      if (state.activeBridge) {
+        const activeDomain = domains.find((entry) => entry.name === state.activeBridge);
+        if (activeDomain?.bridgeFooter) {
+          footerText.textContent = `${activeDomain.bridgeFooter} Fond sowwwl-pi en veille de raccord.`;
+        }
+      }
       scheduleCameraRetry();
       return;
     }
@@ -314,6 +405,12 @@
       updateCameraState('fond sowwwl-pi actif');
       cameraNote.textContent = `Fond direct branche sur ${candidate.includes('/camera/live') ? '/camera/live' : 'le flux local MJPEG'}.`;
       footerText.textContent = 'Fond de page: sowwwl-pi vivant. Le moniteur de captures reste visible via /hub/.';
+      if (state.activeBridge) {
+        const activeDomain = domains.find((entry) => entry.name === state.activeBridge);
+        if (activeDomain?.bridgeFooter) {
+          footerText.textContent = `${activeDomain.bridgeFooter} Fond de page: sowwwl-pi vivant.`;
+        }
+      }
     };
 
     probe.onerror = () => {
@@ -437,12 +534,41 @@
     });
   }
 
+  function bindBridges() {
+    if (!bridgeGrid) {
+      return;
+    }
+
+    bridgeGrid.querySelectorAll('.bridge-card').forEach((card) => {
+      const { domain } = card.dataset;
+
+      card.addEventListener('pointerenter', () => {
+        activateBridge(domain);
+        focusWindow(findItem(domain), false);
+      });
+
+      card.addEventListener('focusin', () => {
+        activateBridge(domain);
+      });
+    });
+
+    bridgeGrid.querySelectorAll('[data-bridge-action="summon"]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const domainName = button.dataset.domain;
+        activateBridge(domainName);
+        focusWindow(findItem(domainName), true);
+      });
+    });
+  }
+
   window.addEventListener('pointermove', pointerMove);
   window.addEventListener('pointerleave', pointerLeave);
   window.addEventListener('resize', recalcWindowSizes);
   motionToggle.addEventListener('click', requestMotion);
 
   initWindows();
+  bindBridges();
+  activateBridge('sowwwl.com');
   initCamera();
   requestAnimationFrame(animate);
 })();
