@@ -8,6 +8,7 @@ services:
       - PORT=3311
       - NODE_ENV=production
       - PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium
+      - CAMERA_STREAM_URL=http://192.168.1.22:5051/
       - CAPTURE_INTERVAL_MS=1000
       - DOMAIN_OFFSET_MS=11
       - FOCUS_INTERVAL_MS=8000

@@ -1,5 +1,6 @@
 import express from 'express';
-import { createServer } from 'http';
+import http, { createServer } from 'http';
+import https from 'https';
 import { Server } from 'socket.io';
 import { chromium } from 'playwright';
 import path from 'path';
@@ -21,6 +22,7 @@ const FOCUS_INTERVAL_MS = envNumber('FOCUS_INTERVAL_MS', 8000);
 const CAPTURE_WIDTH = envNumber('CAPTURE_WIDTH', 1440);
 const CAPTURE_HEIGHT = envNumber('CAPTURE_HEIGHT', 960);
 const PLAYWRIGHT_EXECUTABLE_PATH = process.env.PLAYWRIGHT_EXECUTABLE_PATH;
+const CAMERA_STREAM_URL = normalizeCameraUrl(process.env.CAMERA_STREAM_URL || 'http://192.168.1.22:5051/');
 
 const DOMAINS = [
   {
@@ -79,9 +81,14 @@ app.get('/healthz', (req, res) => {
   res.json({
     status: 'ok',
     browserReady: Boolean(browser),
+    cameraConfigured: Boolean(CAMERA_STREAM_URL),
     captureWave,
     timestamp: new Date().toISOString()
   });
+});
+
+app.get('/api/camera', (req, res) => {
+  res.json(cameraConfig());
 });
 
 app.get('/api/domains', (req, res) => {
@@ -96,6 +103,7 @@ app.get('/api/state', (req, res) => {
     startedAt: serverStartedAt,
     browserReady: Boolean(browser),
     captureWave,
+    camera: cameraConfig(),
     domains: DOMAINS.map((domain) => {
       const snapshot = latestSnapshots.get(domain.name);
 
@@ -109,6 +117,14 @@ app.get('/api/state', (req, res) => {
       };
     })
   });
+});
+
+app.get('/camera/live', (req, res) => {
+  proxyCameraStream(req, res);
+});
+
+app.head('/camera/live', (req, res) => {
+  proxyCameraStream(req, res);
 });
 
 io.on('connection', (socket) => {
@@ -261,7 +277,17 @@ function publicConfig() {
   return {
     captureIntervalMs: CAPTURE_INTERVAL_MS,
     domainOffsetMs: DOMAIN_OFFSET_MS,
-    focusIntervalMs: FOCUS_INTERVAL_MS
+    focusIntervalMs: FOCUS_INTERVAL_MS,
+    camera: cameraConfig()
+  };
+}
+
+function cameraConfig() {
+  return {
+    configured: Boolean(CAMERA_STREAM_URL),
+    streamUrl: CAMERA_STREAM_URL || null,
+    proxyPath: CAMERA_STREAM_URL ? '/camera/live' : null,
+    note: 'The proxy works only when this server can reach the camera over the same network.'
   };
 }
 
@@ -269,6 +295,20 @@ function envNumber(name, fallback) {
   const value = Number(process.env[name]);
 
   return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function normalizeCameraUrl(value) {
+  if (!value) {
+    return '';
+  }
+
+  const trimmed = String(value).trim();
+
+  if (!trimmed) {
+    return '';
+  }
+
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
 }
 
 function simplifyError(error) {
@@ -280,6 +320,70 @@ function simplifyError(error) {
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function proxyCameraStream(req, res) {
+  if (!CAMERA_STREAM_URL) {
+    res.status(503).json({
+      status: 'error',
+      message: 'Camera stream is not configured.'
+    });
+    return;
+  }
+
+  const target = new URL(CAMERA_STREAM_URL);
+  const transport = target.protocol === 'https:' ? https : http;
+
+  const upstreamRequest = transport.request(
+    target,
+    {
+      method: req.method === 'HEAD' ? 'HEAD' : 'GET',
+      headers: {
+        Accept: req.headers.accept || '*/*',
+        'User-Agent': 'sowwwl-hub-camera-proxy'
+      }
+    },
+    (upstreamResponse) => {
+      const headers = { ...upstreamResponse.headers };
+      delete headers['content-length'];
+      delete headers['content-security-policy'];
+      delete headers['x-frame-options'];
+
+      res.status(upstreamResponse.statusCode || 200);
+      res.set({
+        ...headers,
+        'cache-control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'x-sowwwl-camera-source': CAMERA_STREAM_URL
+      });
+
+      if (req.method === 'HEAD') {
+        upstreamResponse.resume();
+        res.end();
+        return;
+      }
+
+      upstreamResponse.pipe(res);
+    }
+  );
+
+  upstreamRequest.on('error', (error) => {
+    if (!res.headersSent) {
+      res.status(502).json({
+        status: 'error',
+        message: simplifyError(error),
+        source: CAMERA_STREAM_URL
+      });
+      return;
+    }
+
+    res.end();
+  });
+
+  req.on('close', () => {
+    upstreamRequest.destroy();
+  });
+
+  upstreamRequest.end();
 }
 
 function launchOptions() {

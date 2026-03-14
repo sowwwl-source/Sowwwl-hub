@@ -8,19 +8,111 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="shell">
-    <p class="eyebrow">SOWWWL / O. s habite</p>
-    <h1>O. n est pas une interface a parcourir. C est un lieu a habiter.</h1>
-    <p class="lede">
-      La presence publique reste ouverte ici pendant que le hub vivant des cinq domaines se branche.
-    </p>
+  <div class="atmosphere atmosphere-a" aria-hidden="true"></div>
+  <div class="atmosphere atmosphere-b" aria-hidden="true"></div>
 
-    <div class="status">
-      <span class="status-dot"></span>
-      <span>Presence publique active</span>
-    </div>
+  <main class="site-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">SOWWWL / O. s habite</p>
+        <h1>O. n est pas une interface a parcourir. C est un lieu a habiter.</h1>
+        <p class="lede">
+          La presence publique se densifie ici avec la console, la camera locale et les cinq seuils du reseau.
+        </p>
+      </div>
 
-    <p class="domains">sowwwl.com · sowwwl.art · sowwwl.net · sowwwl.fr · sowwwl.cloud</p>
+      <div class="hero-meta">
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          <span>presence publique active</span>
+        </div>
+        <p class="meta-line">camera source · 192.168.1.22:5051 · console vivante</p>
+      </div>
+    </header>
+
+    <section class="presence-grid">
+      <article class="panel camera-panel">
+        <div class="panel-head">
+          <div>
+            <p class="panel-kicker">chambre camera</p>
+            <h2>Flux local</h2>
+          </div>
+          <p class="panel-note" id="cameraMode">Recherche d un relais ou d un flux direct.</p>
+        </div>
+
+        <div class="camera-stage" id="cameraStage">
+          <img id="cameraImage" class="camera-image" alt="Flux camera live" hidden>
+          <iframe id="cameraFrame" class="camera-frame" title="Flux camera local" hidden loading="lazy"></iframe>
+          <div class="camera-placeholder" id="cameraPlaceholder">
+            Le flux va prendre place ici des qu une route video est disponible.
+          </div>
+        </div>
+
+        <div class="camera-actions">
+          <a class="action-link action-link-primary" id="cameraOpen" href="http://192.168.1.22:5051/" target="_blank" rel="noreferrer">
+            ouvrir le flux local
+          </a>
+          <button class="action-link action-link-secondary" id="cameraCopy" type="button">
+            copier l adresse
+          </button>
+        </div>
+      </article>
+
+      <aside class="panel console-panel">
+        <div class="panel-head">
+          <div>
+            <p class="panel-kicker">console du lieu</p>
+            <h2>Presence machine</h2>
+          </div>
+          <p class="panel-note" id="consoleTone">Le flux camera rejoint la console des qu un relais est en place.</p>
+        </div>
+
+        <div class="console-stack">
+          <div class="console-row">
+            <span>camera</span>
+            <strong id="cameraAddress">192.168.1.22:5051</strong>
+          </div>
+          <div class="console-row">
+            <span>relais</span>
+            <strong>/camera/live</strong>
+          </div>
+          <div class="console-row">
+            <span>etat</span>
+            <strong id="cameraStatus">relais en attente</strong>
+          </div>
+        </div>
+
+        <div class="domain-strip">
+          <div class="domain-chip">sowwwl.com</div>
+          <div class="domain-chip">sowwwl.art</div>
+          <div class="domain-chip">sowwwl.net</div>
+          <div class="domain-chip">sowwwl.fr</div>
+          <div class="domain-chip">sowwwl.cloud</div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="lower-grid">
+      <article class="panel text-panel">
+        <p class="panel-kicker">console + video ia</p>
+        <h2>Le lieu s anime par couches</h2>
+        <p>
+          La camera n arrive pas comme une vignette decorative. Elle alimente la console, ajoute une respiration directe,
+          et ouvre une autre maniere de demeurer dans O.
+        </p>
+      </article>
+
+      <article class="panel relay-panel">
+        <p class="panel-kicker">mise en ligne</p>
+        <h2>Branchement</h2>
+        <p>
+          Depuis <code>https://sowwwl.org</code>, un flux <code>http://192.168.1.22:5051</code> demande un relais
+          <code>https</code> ou un hub sur le meme reseau. L interface est prete pour ce passage.
+        </p>
+      </article>
+    </section>
   </main>
+
+  <script src="site.js"></script>
 </body>
 </html>
