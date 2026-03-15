@@ -1,11 +1,14 @@
 (() => {
   const storageKey = 'sowwwl-cloud-guest';
+  const scrollOptions = { behavior: 'smooth', block: 'start' };
   const guestStatus = document.getElementById('guestStatus');
   const arStatus = document.getElementById('arStatus');
   const audioStatus = document.getElementById('audioStatus');
   const guestName = document.getElementById('guestName');
   const guestCopy = document.getElementById('guestCopy');
   const guestSection = document.getElementById('guestSection');
+  const visionPanel = document.getElementById('visionPanel');
+  const instrumentPanel = document.getElementById('instrumentPanel');
   const cameraFeed = document.getElementById('cameraFeed');
   const cameraFallback = document.getElementById('cameraFallback');
   const cameraNote = document.getElementById('cameraNote');
@@ -26,6 +29,13 @@
   const glyphA = document.getElementById('glyphA');
   const glyphB = document.getElementById('glyphB');
   const glyphC = document.getElementById('glyphC');
+  const link3dStage = document.getElementById('link3dStage');
+  const link3dScene = document.getElementById('link3dScene');
+  const link3dStatus = document.getElementById('link3dStatus');
+  const link3dTitle = document.getElementById('link3dTitle');
+  const link3dText = document.getElementById('link3dText');
+  const link3dAction = document.getElementById('link3dAction');
+  const linkNodes = Array.from(document.querySelectorAll('.link-node'));
 
   const state = {
     guest: loadGuest(),
@@ -36,7 +46,20 @@
     filterNode: null,
     oscillators: new Map(),
     motionReady: false,
-    cameraReady: false
+    cameraReady: false,
+    reducedMotion:
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    link3d: {
+      selected: 'cloud',
+      pointerX: 0,
+      pointerY: 0,
+      currentX: 0,
+      currentY: 0,
+      targetX: 0,
+      targetY: 0,
+      raf: 0
+    }
   };
 
   const adjectives = ['brume', 'ferme', 'legere', 'vive', 'sourde', 'ardente', 'claire'];
@@ -129,6 +152,31 @@
     }
   }
 
+  function defaultLink3dStatus() {
+    if (state.motionReady) {
+      return 'Le LINK 3D suit maintenant l inclinaison de l appareil.';
+    }
+
+    return 'Glisse ou incline l appareil pour orienter la constellation.';
+  }
+
+  function setLink3dStatus(text) {
+    if (!link3dStatus) {
+      return;
+    }
+
+    link3dStatus.textContent = text || defaultLink3dStatus();
+  }
+
+  function moveGlyphs() {
+    const dx = state.tilt.x * 24 + state.link3d.pointerX * 10;
+    const dy = state.tilt.y * 18 + state.link3d.pointerY * 8;
+
+    glyphA.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+    glyphB.style.transform = `translate3d(${-dx * 0.7}px, ${dy * 0.6}px, 0)`;
+    glyphC.style.transform = `translate3d(${dx * 0.35}px, ${-dy * 0.8}px, 0)`;
+  }
+
   async function requestMotion() {
     if (
       typeof DeviceOrientationEvent !== 'undefined' &&
@@ -152,8 +200,7 @@
       window.addEventListener('deviceorientation', (event) => {
         state.tilt.x = Math.max(-1, Math.min(1, (event.gamma || 0) / 35));
         state.tilt.y = Math.max(-1, Math.min(1, (event.beta || 0) / 45));
-        const x = 50 + state.tilt.x * 26;
-        tiltMeter.style.left = `${x}%`;
+        tiltMeter.style.left = `${50 + state.tilt.x * 26}%`;
         moveGlyphs();
 
         if (state.filterNode) {
@@ -161,28 +208,22 @@
         }
       });
       state.motionReady = true;
+      setLink3dStatus();
     }
 
     return true;
   }
 
-  function moveGlyphs() {
-    const dx = state.tilt.x * 24;
-    const dy = state.tilt.y * 18;
-
-    glyphA.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
-    glyphB.style.transform = `translate3d(${-dx * 0.7}px, ${dy * 0.6}px, 0)`;
-    glyphC.style.transform = `translate3d(${dx * 0.35}px, ${-dy * 0.8}px, 0)`;
-  }
-
   async function startCamera() {
     if (state.stream) {
+      renderLink3dSelection();
       return;
     }
 
     if (!navigator.mediaDevices?.getUserMedia) {
       setPill(arStatus, 'camera absente', 'error');
       cameraNote.textContent = 'Cet appareil ne propose pas getUserMedia. On garde le mode apparition en attente.';
+      renderLink3dSelection();
       return;
     }
 
@@ -207,11 +248,13 @@
       setPill(arStatus, 'apparition active', 'live');
       cameraNote.textContent =
         'La couche cloud se pose sur la camera. Incline l appareil pour deplacer les reperes et sentir la profondeur.';
-    } catch (error) {
+    } catch {
       setPill(arStatus, 'camera refusee', 'warn');
       cameraNote.textContent =
         'L apparition reste lisible meme sans camera. Autorise l acces plus tard pour activer la couche visuelle.';
     }
+
+    renderLink3dSelection();
   }
 
   function stopCamera() {
@@ -227,10 +270,17 @@
     cameraFallback.hidden = false;
     setPill(arStatus, 'camera en veille', 'warn');
     cameraNote.textContent = 'Le mode apparition est en veille. Tu peux le reouvrir quand tu veux.';
+    renderLink3dSelection();
   }
 
   async function ensureAudio() {
     if (state.audioContext) {
+      if (state.audioContext.state === 'suspended') {
+        await state.audioContext.resume();
+      }
+
+      setPill(audioStatus, state.oscillators.size ? 'instrument actif' : 'instrument pret', 'live');
+      renderLink3dSelection();
       return;
     }
 
@@ -239,6 +289,7 @@
     if (!Context) {
       setPill(audioStatus, 'audio indisponible', 'error');
       instrumentNote.textContent = 'Le navigateur ne propose pas Web Audio sur cet appareil.';
+      renderLink3dSelection();
       return;
     }
 
@@ -260,6 +311,7 @@
 
     setPill(audioStatus, 'instrument pret', 'live');
     instrumentNote.textContent = 'Appuie sur une case. Si le capteur repond, l inclinaison change le timbre.';
+    renderLink3dSelection();
   }
 
   function stopNote(pad) {
@@ -279,6 +331,7 @@
 
     if (!state.oscillators.size) {
       readoutValue.textContent = 'silence prepare';
+      renderLink3dSelection();
     }
   }
 
@@ -307,15 +360,195 @@
     pad.classList.add('is-playing');
     readoutValue.textContent = `${pad.textContent} en vibration`;
     setPill(audioStatus, 'instrument actif', 'live');
+    renderLink3dSelection();
   }
 
   function stopAllNotes() {
     pads.forEach((pad) => stopNote(pad));
     setPill(audioStatus, 'instrument en veille', 'warn');
+    renderLink3dSelection();
+  }
+
+  async function activateGuest() {
+    if (!state.guest) {
+      saveGuest(createGuest());
+      renderGuest();
+      renderLink3dSelection();
+    }
+
+    guestSection.scrollIntoView(scrollOptions);
+  }
+
+  async function activateInstrument() {
+    await ensureAudio();
+    instrumentPanel.scrollIntoView(scrollOptions);
+  }
+
+  async function activateCloud() {
+    await startCamera();
+    visionPanel.scrollIntoView(scrollOptions);
+  }
+
+  function getLink3dEntry(key) {
+    if (key === 'org') {
+      return {
+        title: 'sowwwl.org',
+        text: 'Le comptoir vivant. La facade habitee qui relie les passages, la camera et la presence du lieu.',
+        actionLabel: 'aller au hub',
+        glyphB: 'comptoir',
+        glyphC: 'org',
+        run: () => {
+          window.location.assign('/');
+        }
+      };
+    }
+
+    if (key === 'com') {
+      return {
+        title: 'sowwwl.com',
+        text: 'Le foyer minimal. Une presence dense, centrale, presque muette, depuis laquelle le reste respire.',
+        actionLabel: 'ouvrir le foyer',
+        glyphB: 'foyer',
+        glyphC: 'com',
+        run: () => {
+          window.open('https://sowwwl.com', '_blank', 'noopener,noreferrer');
+        }
+      };
+    }
+
+    if (key === 'net') {
+      return {
+        title: 'sowwwl.net',
+        text: 'La marche et l usage. Un territoire plus praticable, plus outille, plus deja en mouvement.',
+        actionLabel: 'ouvrir la marche',
+        glyphB: 'marche',
+        glyphC: 'net',
+        run: () => {
+          window.open('https://sowwwl.net', '_blank', 'noopener,noreferrer');
+        }
+      };
+    }
+
+    if (key === 'instrument') {
+      return {
+        title: 'instrument mobile',
+        text: state.audioContext
+          ? 'Le smartphone est pret a vibrer. Une simple pression suffit pour jouer et l inclinaison colore le timbre.'
+          : 'Le smartphone devient un petit instrument vivant. Appui, glisse et inclinaison suffisent pour entrer.',
+        actionLabel: 'jouer maintenant',
+        glyphB: 'fer',
+        glyphC: 'vin',
+        run: activateInstrument
+      };
+    }
+
+    if (key === 'guest') {
+      return {
+        title: 'mode invite',
+        text: state.guest
+          ? `La signature ${state.guest.name} reste ici, sur cet appareil, comme premiere appartenance partageable.`
+          : 'Une signature locale suffit pour entrer tout de suite et garder une premiere trace sans compte.',
+        actionLabel: state.guest ? 'ouvrir la signature' : 'generer une signature',
+        glyphB: 'invite',
+        glyphC: 'passage',
+        run: activateGuest
+      };
+    }
+
+    return {
+      title: 'sowwwl.cloud',
+      text: state.cameraReady
+        ? 'La couche mobile est ouverte. Le lieu se pose sur la camera et le LINK 3D garde les autres passages a portee.'
+        : 'Le noyau mobile du lieu. La couche qui met SOWWWL dans la main avant meme la creation d un compte.',
+      actionLabel: state.cameraReady ? 'recentrer l apparition' : 'ouvrir l apparition',
+      glyphB: 'sowwwl',
+      glyphC: 'cloud',
+      run: activateCloud
+    };
+  }
+
+  function renderLink3dSelection() {
+    const entry = getLink3dEntry(state.link3d.selected);
+
+    if (!entry) {
+      return;
+    }
+
+    link3dTitle.textContent = entry.title;
+    link3dText.textContent = entry.text;
+    link3dAction.textContent = entry.actionLabel;
+    glyphB.textContent = entry.glyphB;
+    glyphC.textContent = entry.glyphC;
+
+    linkNodes.forEach((node) => {
+      node.classList.toggle('is-active', node.dataset.linkKey === state.link3d.selected);
+    });
+  }
+
+  function activateLink3d(key, options = {}) {
+    if (!getLink3dEntry(key)) {
+      return;
+    }
+
+    state.link3d.selected = key;
+    renderLink3dSelection();
+
+    if (options.announce === false) {
+      return;
+    }
+
+    const entry = getLink3dEntry(key);
+    const tail = state.motionReady
+      ? 'Incline pour sentir la profondeur.'
+      : 'Glisse pour orienter la scene.';
+    setLink3dStatus(`${entry.title} au premier plan. ${tail}`);
+  }
+
+  async function runLink3dAction() {
+    const entry = getLink3dEntry(state.link3d.selected);
+
+    if (!entry) {
+      return;
+    }
+
+    await entry.run();
+    renderLink3dSelection();
+    setLink3dStatus();
+  }
+
+  function animateLink3d() {
+    if (!link3dScene || !link3dStage) {
+      return;
+    }
+
+    const intensity = state.reducedMotion ? 0.45 : 1;
+    const floatY = state.reducedMotion ? 0 : Math.sin(window.performance.now() / 1100) * 3.5;
+
+    state.link3d.targetX = (-state.link3d.pointerY * 10 - state.tilt.y * 14) * intensity;
+    state.link3d.targetY = (state.link3d.pointerX * 14 + state.tilt.x * 18) * intensity;
+    state.link3d.currentX += (state.link3d.targetX - state.link3d.currentX) * 0.08;
+    state.link3d.currentY += (state.link3d.targetY - state.link3d.currentY) * 0.08;
+
+    link3dScene.style.transform =
+      `translate3d(0, ${floatY}px, 0) rotateX(${state.link3d.currentX.toFixed(2)}deg) ` +
+      `rotateY(${state.link3d.currentY.toFixed(2)}deg)`;
+
+    link3dStage.style.setProperty(
+      '--glow-x',
+      `${50 + (state.link3d.pointerX * 10 + state.tilt.x * 12) * intensity}%`
+    );
+    link3dStage.style.setProperty(
+      '--glow-y',
+      `${42 + (state.link3d.pointerY * 8 - state.tilt.y * 10) * intensity}%`
+    );
+
+    moveGlyphs();
+    state.link3d.raf = window.requestAnimationFrame(animateLink3d);
   }
 
   function wirePad(pad) {
     pad.addEventListener('pointerdown', async () => {
+      activateLink3d('instrument', { announce: false });
       await startNote(pad);
     });
 
@@ -324,45 +557,108 @@
     pad.addEventListener('pointercancel', () => stopNote(pad));
   }
 
-  launchGuest.addEventListener('click', () => {
-    if (!state.guest) {
-      saveGuest(createGuest());
-    }
-    renderGuest();
-    guestSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  launchGuest.addEventListener('click', async () => {
+    activateLink3d('guest', { announce: false });
+    await activateGuest();
   });
 
   launchAr.addEventListener('click', async () => {
-    await startCamera();
-    document.getElementById('visionPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    activateLink3d('cloud', { announce: false });
+    await activateCloud();
   });
 
   launchInstrument.addEventListener('click', async () => {
-    await ensureAudio();
-    document.getElementById('instrumentPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    activateLink3d('instrument', { announce: false });
+    await activateInstrument();
   });
 
-  visionButton.addEventListener('click', startCamera);
+  visionButton.addEventListener('click', async () => {
+    activateLink3d('cloud', { announce: false });
+    await startCamera();
+  });
+
   visionPause.addEventListener('click', stopCamera);
+
   guestGenerate.addEventListener('click', () => {
     saveGuest(createGuest());
     renderGuest();
+    renderLink3dSelection();
   });
-  guestShare.addEventListener('click', shareGuest);
+
+  guestShare.addEventListener('click', async () => {
+    activateLink3d('guest', { announce: false });
+    await shareGuest();
+  });
+
   guestReset.addEventListener('click', () => {
     saveGuest(null);
     renderGuest();
+    renderLink3dSelection();
   });
-  audioButton.addEventListener('click', ensureAudio);
+
+  audioButton.addEventListener('click', async () => {
+    activateLink3d('instrument', { announce: false });
+    await ensureAudio();
+  });
+
   audioStop.addEventListener('click', stopAllNotes);
+
+  linkNodes.forEach((node) => {
+    const key = node.dataset.linkKey;
+
+    node.addEventListener('pointerenter', () => {
+      activateLink3d(key, { announce: false });
+    });
+
+    node.addEventListener('focus', () => {
+      activateLink3d(key, { announce: false });
+    });
+
+    node.addEventListener('click', (event) => {
+      event.preventDefault();
+      activateLink3d(key);
+    });
+  });
+
+  if (link3dStage) {
+    link3dStage.addEventListener('pointerenter', () => {
+      setLink3dStatus('Le LINK 3D suit la main et garde le passage selectionne au centre.');
+    });
+
+    link3dStage.addEventListener('pointermove', (event) => {
+      const rect = link3dStage.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width;
+      const y = (event.clientY - rect.top) / rect.height;
+      state.link3d.pointerX = Math.max(-1, Math.min(1, x * 2 - 1));
+      state.link3d.pointerY = Math.max(-1, Math.min(1, y * 2 - 1));
+      moveGlyphs();
+    });
+
+    link3dStage.addEventListener('pointerleave', () => {
+      state.link3d.pointerX = 0;
+      state.link3d.pointerY = 0;
+      setLink3dStatus();
+      moveGlyphs();
+    });
+  }
+
+  if (link3dAction) {
+    link3dAction.addEventListener('click', runLink3dAction);
+  }
 
   pads.forEach(wirePad);
   renderGuest();
+  renderLink3dSelection();
+  setLink3dStatus();
   moveGlyphs();
+
+  if (link3dScene) {
+    state.link3d.raf = window.requestAnimationFrame(animateLink3d);
+  }
 
   if (navigator.xr?.isSessionSupported) {
     navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
-      if (supported) {
+      if (supported && !state.cameraReady) {
         setPill(arStatus, 'ar native possible', 'live');
       }
     }).catch(() => {});

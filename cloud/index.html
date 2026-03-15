@@ -79,9 +79,9 @@
         <div class="panel-head">
           <div>
             <p class="eyebrow">vision augmentee</p>
-            <h2>Apparition mobile</h2>
+            <h2>Apparition mobile / LINK 3D</h2>
           </div>
-          <p class="panel-note" id="cameraNote">Autorise la camera pour voir la couche cloud dans ton cadre.</p>
+          <p class="panel-note" id="cameraNote">Autorise la camera pour voir la couche cloud, puis oriente le LINK 3D dans ton cadre.</p>
         </div>
 
         <div class="vision-stage" id="visionStage">
@@ -95,6 +95,36 @@
             <div class="vision-overlay__glyph vision-overlay__glyph--a" id="glyphA">O.</div>
             <div class="vision-overlay__glyph vision-overlay__glyph--b" id="glyphB">sowwwl</div>
             <div class="vision-overlay__glyph vision-overlay__glyph--c" id="glyphC">cloud</div>
+          </div>
+        </div>
+
+        <div class="link3d-shell">
+          <div class="link3d-head">
+            <div>
+              <p class="eyebrow">link 3d</p>
+              <h3>Un petit espace lisible de passages</h3>
+            </div>
+            <p class="link3d-note" id="link3dStatus">Glisse ou incline l appareil pour orienter la constellation.</p>
+          </div>
+
+          <div class="link3d-stage" id="link3dStage">
+            <div class="link3d-scene" id="link3dScene">
+              <button class="link-node link-node--core is-active" data-link-key="cloud" type="button">sowwwl.cloud</button>
+              <button class="link-node link-node--org" data-link-key="org" type="button">hub</button>
+              <button class="link-node link-node--com" data-link-key="com" type="button">foyer</button>
+              <button class="link-node link-node--net" data-link-key="net" type="button">marche</button>
+              <button class="link-node link-node--instrument" data-link-key="instrument" type="button">instrument</button>
+              <button class="link-node link-node--guest" data-link-key="guest" type="button">invite</button>
+            </div>
+          </div>
+
+          <div class="link3d-caption">
+            <p class="link3d-caption__kicker">selection</p>
+            <h3 id="link3dTitle">sowwwl.cloud</h3>
+            <p id="link3dText">
+              Le noyau mobile du lieu. La couche qui met SOWWWL dans la main avant meme la creation d un compte.
+            </p>
+            <button class="action action--primary" id="link3dAction" type="button">ouvrir l apparition</button>
           </div>
         </div>
 
