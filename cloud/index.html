@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sowwwl.cloud</title>
+  <meta name="theme-color" content="#0d1216">
+  <meta
+    name="description"
+    content="sowwwl.cloud met le lieu dans la main: vision augmentee, instrument smartphone et mode invite sans compte."
+  >
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="cloud-shell">
+    <header class="hero">
+      <div class="hero__copy">
+        <p class="eyebrow">sowwwl.cloud / seuil mobile</p>
+        <h1>Le lieu tient dans la main.</h1>
+        <p class="lede">
+          sowwwl.cloud est la couche legere et mobile de SOWWWL. Sans compte, on peut deja faire apparaitre,
+          jouer, et entrer en visite.
+        </p>
+      </div>
+
+      <div class="hero__panel">
+        <p class="panel-kicker">sans compte, tout de suite</p>
+        <ul class="promise-list">
+          <li>vision augmentee en preview camera</li>
+          <li>smartphone transforme en instrument</li>
+          <li>mode invite memorise localement</li>
+        </ul>
+
+        <div class="hero__actions">
+          <button class="action action--primary" id="launchGuest" type="button">entrer sans compte</button>
+          <button class="action" id="launchAr" type="button">ouvrir l apparition</button>
+          <button class="action" id="launchInstrument" type="button">jouer avec le smartphone</button>
+        </div>
+
+        <div class="status-row">
+          <p class="status-pill" id="guestStatus"><span></span>mode invite en veille</p>
+          <p class="status-pill" id="arStatus"><span></span>camera a verifier</p>
+          <p class="status-pill" id="audioStatus"><span></span>instrument inactif</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="entry-grid" aria-label="Trois usages evidents">
+      <article class="entry-card">
+        <p class="entry-card__kicker">01 / apparition</p>
+        <h2>Voir le lieu se poser dans l image</h2>
+        <p>
+          Le mode apparition ouvre la camera et pose une couche SOWWWL par-dessus. C est une premiere vision,
+          lisible par tout le monde, sans install et sans login.
+        </p>
+      </article>
+
+      <article class="entry-card">
+        <p class="entry-card__kicker">02 / instrument</p>
+        <h2>Jouer avec le telephone comme avec un petit instrument</h2>
+        <p>
+          Appuie, glisse, incline: le smartphone devient un geste sonore tres simple, assez fort pour comprendre
+          en dix secondes ce que la couche cloud peut faire.
+        </p>
+      </article>
+
+      <article class="entry-card">
+        <p class="entry-card__kicker">03 / invite</p>
+        <h2>Entrer sans compte et garder une trace locale</h2>
+        <p>
+          Un pseudonyme provisoire, une porte partageable, une memoire locale. L utilisateur lambda a quelque
+          chose a garder avant meme de creer un compte.
+        </p>
+      </article>
+    </section>
+
+    <section class="experience-grid">
+      <article class="experience-panel experience-panel--vision" id="visionPanel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">vision augmentee</p>
+            <h2>Apparition mobile</h2>
+          </div>
+          <p class="panel-note" id="cameraNote">Autorise la camera pour voir la couche cloud dans ton cadre.</p>
+        </div>
+
+        <div class="vision-stage" id="visionStage">
+          <video id="cameraFeed" class="vision-stage__video" playsinline muted hidden></video>
+          <div class="vision-stage__fallback" id="cameraFallback">
+            <p>La camera n est pas encore ouverte.</p>
+            <p>Le mode apparition reste disponible des qu on autorise l acces.</p>
+          </div>
+          <div class="vision-overlay" aria-hidden="true">
+            <div class="vision-overlay__ring"></div>
+            <div class="vision-overlay__glyph vision-overlay__glyph--a" id="glyphA">O.</div>
+            <div class="vision-overlay__glyph vision-overlay__glyph--b" id="glyphB">sowwwl</div>
+            <div class="vision-overlay__glyph vision-overlay__glyph--c" id="glyphC">cloud</div>
+          </div>
+        </div>
+
+        <div class="panel-actions">
+          <button class="action action--primary" id="visionButton" type="button">activer la camera</button>
+          <button class="action" id="visionPause" type="button">mettre en veille</button>
+        </div>
+      </article>
+
+      <article class="experience-panel experience-panel--instrument" id="instrumentPanel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">instrument mobile</p>
+            <h2>Telephone / instrument</h2>
+          </div>
+          <p class="panel-note" id="instrumentNote">Appuie sur une case. L inclinaison colore le timbre si le capteur repond.</p>
+        </div>
+
+        <div class="instrument-shell">
+          <div class="instrument-grid" id="instrumentGrid">
+            <button class="pad pad--1" data-note="220" type="button">terre</button>
+            <button class="pad pad--2" data-note="277.18" type="button">fer</button>
+            <button class="pad pad--3" data-note="329.63" type="button">vin</button>
+            <button class="pad pad--4" data-note="392" type="button">air</button>
+          </div>
+
+          <div class="instrument-readout">
+            <p class="readout-label">etat sonore</p>
+            <p class="readout-value" id="readoutValue">silence prepare</p>
+            <div class="tilt-meter">
+              <span class="tilt-meter__bar" id="tiltMeter"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-actions">
+          <button class="action action--primary" id="audioButton" type="button">activer l instrument</button>
+          <button class="action" id="audioStop" type="button">couper</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="guest-section" id="guestSection">
+      <div class="guest-card">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">mode invite</p>
+            <h2>Une premiere appartenance sans compte</h2>
+          </div>
+          <p class="panel-note">Une signature locale memorisee sur l appareil. Partageable, effacable, immediate.</p>
+        </div>
+
+        <div class="guest-card__body">
+          <div>
+            <p class="guest-label">signature courante</p>
+            <p class="guest-name" id="guestName">aucune signature pour l instant</p>
+            <p class="guest-copy" id="guestCopy">
+              Entre sans compte pour obtenir un nom de passage et un lien partageable.
+            </p>
+          </div>
+
+          <div class="guest-card__actions">
+            <button class="action action--primary" id="guestGenerate" type="button">generer une signature</button>
+            <button class="action" id="guestShare" type="button">copier le lien</button>
+            <button class="action" id="guestReset" type="button">effacer</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="links-section">
+      <div class="links-head">
+        <p class="eyebrow">integration sowwwl</p>
+        <h2>cloud reste branche au reste du lieu</h2>
+      </div>
+
+      <div class="link-grid">
+        <a class="link-card" href="/">
+          <p class="link-card__kicker">hub public</p>
+          <strong>sowwwl.org</strong>
+          <span>revenir au comptoir vivant</span>
+        </a>
+
+        <a class="link-card" href="https://sowwwl.com" target="_blank" rel="noreferrer">
+          <p class="link-card__kicker">foyer central</p>
+          <strong>sowwwl.com</strong>
+          <span>reprendre le seuil minimal</span>
+        </a>
+
+        <a class="link-card" href="https://sowwwl.net" target="_blank" rel="noreferrer">
+          <p class="link-card__kicker">territoire praticable</p>
+          <strong>sowwwl.net</strong>
+          <span>passer vers la marche et l usage</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

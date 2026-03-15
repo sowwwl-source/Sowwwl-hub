@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, 'public');
+const CLOUD_DIR = path.join(__dirname, 'cloud');
 const ROOT_INDEX_PATH = path.join(__dirname, 'index.html');
 const ROOT_STYLE_PATH = path.join(__dirname, 'style.css');
 const ROOT_SCRIPT_PATH = path.join(__dirname, 'site.js');
@@ -65,10 +66,11 @@ const DOMAINS = [
   },
   {
     name: 'sowwwl.cloud',
-    url: 'https://sowwwl.cloud',
-    title: 'Veille et reessai',
-    cue: 'Une presence plus instable, a garder visible.',
-    story: 'La chambre de veille. Si elle vacille, le hub le montre sans expulser le reste du lieu.',
+    url: '/cloud/',
+    captureUrl: `http://127.0.0.1:${PORT}/cloud/`,
+    title: 'Le lieu tient dans la main',
+    cue: 'Une couche mobile, legere, ouverte sans compte.',
+    story: 'La chambre mobile du lieu. Apparition, instrument smartphone, mode invite: tout commence sans login.',
     accent: '#8ab7d8'
   }
 ];
@@ -93,6 +95,7 @@ app.get('/site.js', (req, res) => {
   res.type('application/javascript').sendFile(ROOT_SCRIPT_PATH);
 });
 
+app.use('/cloud', express.static(CLOUD_DIR));
 app.use('/hub', express.static(PUBLIC_DIR));
 
 app.get('/healthz', (req, res) => {
@@ -192,7 +195,7 @@ async function captureDomain(domain, wave) {
     let note = domain.cue;
 
     try {
-      await page.goto(domain.url, {
+      await page.goto(domain.captureUrl || domain.url, {
         waitUntil: 'domcontentloaded',
         timeout: PAGE_TIMEOUT_MS
       });

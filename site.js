@@ -26,7 +26,7 @@
     { name: 'sowwwl.fr', url: 'https://sowwwl.fr', accent: '#c4bc8b' },
     {
       name: 'sowwwl.cloud',
-      url: 'https://sowwwl.cloud',
+      url: '/cloud/',
       accent: '#8ab7d8',
       bridgeRole: 'veille distante',
       bridgeFooter: 'Passage actif: sowwwl.org tient sowwwl.cloud dans un champ proche, meme quand il vacille.'

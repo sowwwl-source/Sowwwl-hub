@@ -41,6 +41,7 @@ COPY server.mjs ./
 COPY index.html ./
 COPY style.css ./
 COPY site.js ./
+COPY cloud/ ./cloud/
 COPY public/ ./public/
 
 EXPOSE 3311
