@@ -152,6 +152,12 @@ body::before {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.action:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+  transform: none;
+}
+
 .action--primary {
   border-color: color-mix(in srgb, var(--cloud) 48%, var(--line));
   background: linear-gradient(135deg, rgba(141, 183, 192, 0.2), rgba(201, 164, 118, 0.12));
@@ -293,12 +299,92 @@ body::before {
   overflow: hidden;
 }
 
+.vision-overlay__portal {
+  position: absolute;
+  inset: 12% 22% 12%;
+  display: grid;
+  place-items: center;
+  animation: portal-breath 7.4s ease-in-out infinite;
+}
+
 .vision-overlay__ring {
   position: absolute;
   inset: 12% 10%;
   border-radius: 26px;
   border: 1px solid rgba(244, 238, 226, 0.18);
   box-shadow: inset 0 0 0 1px rgba(244, 238, 226, 0.08);
+}
+
+.vision-overlay__frame,
+.vision-overlay__veil,
+.vision-overlay__beam {
+  position: absolute;
+  inset: 0;
+}
+
+.vision-overlay__frame {
+  inset: 2% 20%;
+  border: 16px solid rgba(201, 164, 118, 0.7);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(244, 238, 226, 0.18),
+    inset 0 0 0 2px rgba(244, 238, 226, 0.18),
+    inset 0 0 48px rgba(125, 64, 54, 0.18);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 38%),
+    linear-gradient(180deg, rgba(9, 14, 17, 0.18), rgba(9, 14, 17, 0.08));
+}
+
+.vision-overlay__frame::before,
+.vision-overlay__frame::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(244, 238, 226, 0.18);
+}
+
+.vision-overlay__frame::after {
+  inset: auto 14% -26px 14%;
+  height: 1px;
+  border: 0;
+  background: linear-gradient(90deg, transparent, rgba(244, 238, 226, 0.32), transparent);
+}
+
+.vision-overlay__veil {
+  inset: 10% 28%;
+  background:
+    linear-gradient(180deg, rgba(141, 183, 192, 0.22), rgba(9, 14, 17, 0.02) 38%, rgba(201, 164, 118, 0.14) 100%);
+  filter: blur(12px);
+  opacity: 0.76;
+  mix-blend-mode: screen;
+  animation: veil-drift 10s ease-in-out infinite;
+}
+
+.vision-overlay__beam {
+  inset: 18% 32% auto;
+  height: 54%;
+  background:
+    linear-gradient(180deg, rgba(244, 238, 226, 0.22), rgba(141, 183, 192, 0.08) 34%, transparent 100%);
+  filter: blur(16px);
+  opacity: 0.7;
+}
+
+.vision-overlay__caption {
+  position: absolute;
+  bottom: 4%;
+  left: 50%;
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(244, 238, 226, 0.18);
+  background: rgba(11, 17, 20, 0.42);
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  backdrop-filter: blur(14px);
 }
 
 .vision-overlay__glyph {
@@ -542,6 +628,101 @@ body::before {
   margin-top: 4px;
 }
 
+.immersive-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: end;
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(circle at 12% 18%, rgba(201, 164, 118, 0.12), transparent 22%),
+    radial-gradient(circle at 88% 82%, rgba(141, 183, 192, 0.14), transparent 28%),
+    rgba(9, 14, 18, 0.68);
+}
+
+.immersive-shell h3,
+.immersive-overlay__card h2 {
+  margin: 0;
+  font-size: clamp(1.18rem, 2.6vw, 1.7rem);
+  line-height: 1.14;
+}
+
+.immersive-note,
+.immersive-overlay__card p {
+  margin: 10px 0 0;
+  color: var(--ink-soft);
+  line-height: 1.68;
+}
+
+.immersive-shell__actions,
+.immersive-overlay__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.immersive-canvas {
+  position: fixed;
+  inset: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.immersive-overlay {
+  position: fixed;
+  inset: auto 18px 18px;
+  z-index: 30;
+  display: grid;
+  gap: 12px;
+  width: min(360px, calc(100vw - 36px));
+}
+
+.immersive-overlay__card {
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(244, 238, 226, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 34%),
+    rgba(7, 11, 14, 0.78);
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(18px);
+}
+
+.immersive-overlay__actions {
+  justify-content: flex-end;
+}
+
+body.is-immersive-live {
+  background: #05080a;
+}
+
+@keyframes portal-breath {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-4px) scale(1.01);
+  }
+}
+
+@keyframes veil-drift {
+  0%,
+  100% {
+    transform: translate3d(-2%, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(2%, -1%, 0);
+  }
+}
+
 .instrument-shell {
   display: grid;
   gap: 16px;
@@ -703,6 +884,11 @@ body::before {
   .link3d-head {
     flex-direction: column;
   }
+
+  .immersive-shell {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
 }
 
 @media (max-width: 720px) {
@@ -777,6 +963,19 @@ body::before {
     --y: 56%;
   }
 
+  .vision-overlay__portal {
+    inset: 12% 12% 18%;
+  }
+
+  .vision-overlay__frame {
+    inset: 3% 15%;
+    border-width: 11px;
+  }
+
+  .vision-overlay__veil {
+    inset: 12% 22%;
+  }
+
   .hero__actions,
   .panel-actions,
   .guest-card__actions,
@@ -788,5 +987,10 @@ body::before {
   .action,
   .status-pill {
     justify-content: center;
+  }
+
+  .immersive-overlay {
+    inset: auto 10px 10px;
+    width: calc(100vw - 20px);
   }
 }

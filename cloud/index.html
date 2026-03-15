@@ -41,6 +41,7 @@
           <p class="status-pill" id="guestStatus"><span></span>mode invite en veille</p>
           <p class="status-pill" id="arStatus"><span></span>camera a verifier</p>
           <p class="status-pill" id="audioStatus"><span></span>instrument inactif</p>
+          <p class="status-pill" id="xrStatus"><span></span>ar immersive a sonder</p>
         </div>
       </div>
     </header>
@@ -92,6 +93,12 @@
           </div>
           <div class="vision-overlay" aria-hidden="true">
             <div class="vision-overlay__ring"></div>
+            <div class="vision-overlay__portal">
+              <div class="vision-overlay__frame"></div>
+              <div class="vision-overlay__veil"></div>
+              <div class="vision-overlay__beam"></div>
+              <p class="vision-overlay__caption">cadre vivant / voyage</p>
+            </div>
             <div class="vision-overlay__glyph vision-overlay__glyph--a" id="glyphA">O.</div>
             <div class="vision-overlay__glyph vision-overlay__glyph--b" id="glyphB">sowwwl</div>
             <div class="vision-overlay__glyph vision-overlay__glyph--c" id="glyphC">cloud</div>
@@ -125,6 +132,21 @@
               Le noyau mobile du lieu. La couche qui met SOWWWL dans la main avant meme la creation d un compte.
             </p>
             <button class="action action--primary" id="link3dAction" type="button">ouvrir l apparition</button>
+          </div>
+        </div>
+
+        <div class="immersive-shell">
+          <div class="immersive-shell__copy">
+            <p class="eyebrow">entree immersive</p>
+            <h3>Poser le cadre dans le monde reel</h3>
+            <p class="immersive-note" id="immersiveNote">
+              Si le navigateur accepte WebXR, le cadre vivant peut se poser sur une surface et devenir un seuil grandeur nature.
+            </p>
+          </div>
+
+          <div class="immersive-shell__actions">
+            <button class="action action--primary" id="immersiveButton" type="button">entrer en ar immersive</button>
+            <button class="action" id="immersiveReset" type="button" disabled>replacer le cadre</button>
           </div>
         </div>
 
@@ -222,6 +244,23 @@
       </div>
     </section>
   </main>
+
+  <canvas id="immersiveCanvas" class="immersive-canvas" aria-hidden="true"></canvas>
+
+  <div class="immersive-overlay" id="immersiveOverlay" hidden>
+    <div class="immersive-overlay__card">
+      <p class="eyebrow">cadre vivant</p>
+      <h2>Le voyage de Psyche</h2>
+      <p id="immersiveOverlayText">
+        Cherche une surface calme. Un anneau apparaitra, puis touche pour poser le cadre.
+      </p>
+    </div>
+
+    <div class="immersive-overlay__actions">
+      <button class="action" id="immersiveOverlayReset" type="button">replacer</button>
+      <button class="action action--primary" id="immersiveExit" type="button">sortir</button>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
